@@ -6,6 +6,8 @@ import (
 	"log"           // For logging messages to the console
 	"net/http"      // To create a web server and handle requests
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 // Define a struct called Car
@@ -30,11 +32,20 @@ type Car struct {
 }
 
 func main() {
+	// Load .env file
+	err := godotenv.Load(".env.local")
+	if err != nil {
+		log.Println(".env file not found, falling back to system environment variables")
+	}
 	// The Supabase REST API endpoint for our "cars" table
 	supabaseURL :=os.Getenv("SUPABASE_URL")
 	// Your Supabase anon key
 	// This allows our Go server to access the Supabase API
 	supabaseKey := os.Getenv(("SUPABASE_ANON_KEY"))
+
+	if supabaseURL == "" || supabaseKey == "" {
+	log.Fatal("Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables")
+}
 
 	// Set up a route "/cars" on our Go server
 	// Whenever someone visits "http://localhost:8080/cars", this function runs
