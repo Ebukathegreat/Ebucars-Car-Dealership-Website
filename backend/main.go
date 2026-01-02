@@ -93,10 +93,18 @@ func main() {
 		json.NewEncoder(w).Encode(cars)
 	})
 
-	// Print a message in the console so we know the server is running
-	log.Println("Server running on http://localhost:8080")
+	
+	// Get port from environment (Render sets this automatically)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // fallback for local development
+	}
 
-	// Start the server on port 8080
-	// The server will keep running until you stop it
-	http.ListenAndServe(":8080", nil)
+		// Print a message in the console so we know the server is running
+	log.Println("Server running on port", port)
+	err = http.ListenAndServe(":"+port, nil)
+	if err != nil {
+		log.Fatal("Failed to start server:", err)
+	}
+
 }
