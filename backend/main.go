@@ -98,6 +98,60 @@ func main() {
 		json.NewEncoder(w).Encode(cars)
 	})
 
+
+
+	// ----------------------
+	// Route 2: /cars/{id} → single car
+	// ----------------------
+
+	http.HandleFunc("/cars/", func(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Set("Content-Type", "application/json")
+
+    id := strings.TrimPrefix(r.URL.Path, "/cars/")
+    if id == "" {
+        http.Error(w, "Car ID is required", http.StatusBadRequest)
+        return
+    }
+
+    client := &http.Client{}
+
+    req, err := http.NewRequest(
+        "GET",
+        supabaseURL+"?id=eq."+id,
+        nil,
+    )
+    if err != nil {
+        http.Error(w, "Failed to create request", http.StatusInternalServerError)
+        return
+    }
+
+    req.Header.Set("apikey", supabaseKey)
+    req.Header.Set("Authorization", "Bearer "+supabaseKey)
+    req.Header.Set("Accept", "application/json")
+
+    resp, err := client.Do(req)
+    if err != nil {
+        http.Error(w, "Failed to fetch car", http.StatusInternalServerError)
+        return
+    }
+    defer resp.Body.Close()
+
+    var cars []Car
+    if err := json.NewDecoder(resp.Body).Decode(&cars); err != nil {
+        http.Error(w, "Failed to decode car", http.StatusInternalServerError)
+        return
+    }
+
+    if len(cars) == 0 {
+        http.Error(w, "Car not found", http.StatusNotFound)
+        return
+    }
+
+    json.NewEncoder(w).Encode(cars[0])
+})
+
+
 	
 	// Get port from environment (Render sets this automatically)
 	port := os.Getenv("PORT")
@@ -111,79 +165,5 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
-
-
-	// Handle requests like: GET /cars/3
-// This endpoint returns ONE car based on the ID in the URL
-http.HandleFunc("/cars/", func(w http.ResponseWriter, r *http.Request) {
-
-    // Allow requests from ANY frontend (React, browser, etc.)
-    // This fixes CORS issues when fetching from the frontend
-    w.Header().Set("Access-Control-Allow-Origin", "*")
-
-    // Tell the browser we are sending JSON data
-    w.Header().Set("Content-Type", "application/json")
-
-    // Extract the car ID from the URL
-    // Example:
-    // URL: /cars/3  → id = "3"
-    id := strings.TrimPrefix(r.URL.Path, "/cars/")
-
-    // If no ID was provided, return an error
-    if id == "" {
-        http.Error(w, "Car ID is required", http.StatusBadRequest)
-        return
-    }
-
-    // Create an HTTP client to talk to Supabase
-    client := &http.Client{}
-
-    // Build a GET request to Supabase
-    // ?id=eq.<id> means:
-    // "Give me the car whose id equals this value"
-    req, err := http.NewRequest(
-        "GET",
-        supabaseURL+"?id=eq."+id,
-        nil,
-    )
-    if err != nil {
-        http.Error(w, "Failed to create request", http.StatusInternalServerError)
-        return
-    }
-
-    // Add authentication headers so Supabase allows the request
-    req.Header.Set("apikey", supabaseKey)
-    req.Header.Set("Authorization", "Bearer "+supabaseKey)
-    req.Header.Set("Accept", "application/json")
-
-    // Send the request to Supabase
-    resp, err := client.Do(req)
-    if err != nil {
-        http.Error(w, "Failed to fetch car", http.StatusInternalServerError)
-        return
-    }
-
-    // Always close the response body when we're done
-    defer resp.Body.Close()
-
-    // Supabase returns an ARRAY, even when fetching by ID
-    // So we decode into a slice of Car
-    var cars []Car
-    if err := json.NewDecoder(resp.Body).Decode(&cars); err != nil {
-        http.Error(w, "Failed to decode car", http.StatusInternalServerError)
-        return
-    }
-
-    // If the array is empty, no car matched that ID
-    if len(cars) == 0 {
-        http.Error(w, "Car not found", http.StatusNotFound)
-        return
-    }
-
-    // Send back ONLY the first car object (cars[0])
-    // This keeps the frontend simple: it receives one car, not an array
-    json.NewEncoder(w).Encode(cars[0])
-})
-
 
 }
