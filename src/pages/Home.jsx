@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Navbar from "../pages-components/Navbar";
 import styles from "./home.module.css";
-import { supabase } from "../library/supabaseClient";
+import { Link } from "react-router-dom";
 
 export default function Home() {
   const [allCars, setAllCars] = useState([]);
@@ -14,14 +14,22 @@ export default function Home() {
         const data = await fetch(url);
         const results = await data.json();
 
-        console.log(results);
+        console.log("THESE ARE: ", results);
+        setAllCars(results);
       } catch (err) {
         console.log("ERROR: ", err);
+        setErrors(err);
       }
     }
 
     fetchAllCars();
   }, []);
+
+  const newCars = allCars.filter((nwCr) => nwCr.condition === "New");
+
+  const usedCars = allCars.filter((used) => used.condition === "Used");
+
+  console.log(usedCars);
 
   return (
     <div>
@@ -57,8 +65,58 @@ export default function Home() {
         </section>
       </div>
 
-      <section>
-        <h2 className="text-3xl font-bold ">New Cars</h2>
+      <section className="py-4 px-7">
+        <h2 className="text-3xl font-extrabold font-mono ">New Cars</h2>
+
+        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 my-4">
+          {newCars
+            .map((nwCr) => (
+              <li key={nwCr.id}>
+                <Link to={`/car_details/${nwCr.id}`}>
+                  <img
+                    src={nwCr.images[0]}
+                    alt={nwCr.name}
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  <h3 className="font-bold my-2">{nwCr.name}</h3>
+                  <p>${nwCr.price}</p>
+                </Link>
+              </li>
+            ))
+            .slice(0, 3)}
+        </ul>
+
+        <div className="text-center">
+          <button className="bg-[linear-gradient(rgba(31,29,48,0.7),rgba(79,62,124,0.7))] py-2 px-7 text-center rounded-3xl font-semibold cursor-pointer hover:bg-amber-300 text-[gold] text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)]">
+            View More New Cars
+          </button>
+        </div>
+      </section>
+
+      <section className="py-4 px-7">
+        <h2 className="text-3xl font-extrabold font-mono ">Used Cars</h2>
+
+        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 my-4">
+          {usedCars
+            .map((used) => (
+              <li key={used.id}>
+                <img
+                  src={used.images[0]}
+                  alt={used.name}
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+                <h3 className="font-bold my-2">{used.name}</h3>
+                <p>${used.price}</p>
+              </li>
+            ))
+            .slice(0, 3)}
+        </ul>
+
+        <div className="text-center">
+          <button className="bg-[linear-gradient(rgba(31,29,48,0.7),rgba(79,62,124,0.7))] py-2 px-7 text-center rounded-3xl font-semibold cursor-pointer hover:bg-amber-300 text-[gold] text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)]">
+            View More Used Cars
+          </button>
+        </div>
       </section>
     </div>
   );
