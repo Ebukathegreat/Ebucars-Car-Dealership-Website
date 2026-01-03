@@ -48,9 +48,12 @@ func main() {
 }
 
 	// Set up a route "/cars" on our Go server
-	// Whenever someone visits "http://localhost:8080/cars", this function runs
+	// Whenever someone visits "https://ebucars-car-dealership-website.onrender.com/cars" or http://localhost:8080/cars", this function runs
 	http.HandleFunc("/cars", func(w http.ResponseWriter, r *http.Request) {
+
+	    // ✅ Add CORS header to allow requests from any origin (for testing/portfolio purposes)
 		// Tell the browser we are sending JSON data
+	    w.Header().Set("Access-Control-Allow-Origin", "*") 
 		w.Header().Set("Content-Type", "application/json")
 
 		// Create a new HTTP client to make a request to Supabase

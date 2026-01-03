@@ -1,3 +1,11 @@
+import { Outlet } from "react-router-dom";
+
 export default function App() {
-  return <h1>Car Dealership Portfolio</h1>;
+  return (
+    <div>
+      <main>
+        <Outlet />
+      </main>
+    </div>
+  );
 }

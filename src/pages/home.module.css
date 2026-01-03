@@ -1,0 +1,11 @@
+.hero {
+  min-height: 90vh;
+  background-image: linear-gradient(
+      rgba(31, 29, 48, 0.4),
+      rgba(79, 62, 124, 0.4)
+    ),
+    url("/Silver\ Range\ Rover\ Velar\ 2022\ ChatGPT\ Image\ Jan\ 1\,\ 2026\,\ 04_13_37\ PM.png");
+  background-position: center;
+  background-sie: 100% 100%;
+  background-repeat: no-repeat;
+}
