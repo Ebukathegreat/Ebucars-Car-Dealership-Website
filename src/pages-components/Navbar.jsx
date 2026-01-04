@@ -2,7 +2,7 @@ import { faBars } from "@fortawesome/free-solid-svg-icons";
 import { faClose } from "@fortawesome/free-solid-svg-icons/faClose";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 
 export default function Navbar() {
   // auto close sidebar on resize
@@ -14,15 +14,27 @@ export default function Navbar() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const linkStyle = ({ isActive }) =>
-    isActive
-      ? "text-green-500 hover:text-yellow-400 font-bold px-4 py-2 block"
-      : "text-white hover:text-yellow-400 font-bold px-4 py-2 block  ";
-
   const [open, setOpen] = useState(false);
 
+  const location = useLocation();
+  const pathname = location.pathname;
+
+  const linkStyle = ({ isActive }) => {
+    if (isActive) {
+      return "text-green-500 font-bold px-4 py-2 block";
+    }
+
+    return pathname === "/" || window.innerWidth <= 600
+      ? "text-white hover:text-yellow-400 font-bold px-4 py-2 block transition-colors duration-300"
+      : "text-black hover:text-yellow-400 font-bold px-4 py-2 block transition-colors duration-300";
+  };
+
   return (
-    <nav className="relative flex items-center px-3.5 md:px-8 h-16 ">
+    <nav
+      className={`${
+        pathname === "/" ? " absolute top-0 left-0 w-full  " : "relative"
+      } flex items-center px-3.5 md:px-8 h-16 `}
+    >
       {/* LEFT: Logo */}
       <Link to="/" className="text-white font-bold text-xl">
         Ebucars
@@ -52,12 +64,18 @@ export default function Navbar() {
         <input
           type="text"
           placeholder="Search..."
-          className="p-2 rounded-md outline-none bg-white"
+          className={`${
+            pathname === "/"
+              ? "bg-white"
+              : "bg-gray-600 text-white text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)]"
+          } p-2 rounded-md outline-none `}
         />
       </div>
 
       <div
-        className="md:hidden flex ml-auto cursor-pointer text-white"
+        className={`md:hidden flex ml-auto cursor-pointer ${
+          pathname === "/" ? "text-white" : "text-black"
+        } `}
         onClick={() => setOpen(!open)}
       >
         <FontAwesomeIcon icon={faBars} className="text-2xl " />

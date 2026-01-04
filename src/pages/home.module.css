@@ -9,3 +9,9 @@
   background-sie: 100% 100%;
   background-repeat: no-repeat;
 }
+
+@media all and (max-width: 600px) {
+  .hero {
+    min-height: 72vh;
+  }
+}
