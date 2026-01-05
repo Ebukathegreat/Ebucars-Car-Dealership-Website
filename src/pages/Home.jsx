@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./home.module.css";
 import { Link } from "react-router-dom";
 
@@ -7,32 +7,47 @@ export default function Home() {
   const [errors, setErrors] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchAllCars() {
-      try {
-        const url = "https://ebucars-car-dealership-website.onrender.com/cars";
-        const data = await fetch(url);
-        const results = await data.json();
+  const ref = useRef(false);
 
-        console.log("THESE ARE: ", results);
-        setAllCars(results);
-        setLoading(false);
-      } catch (err) {
-        console.log("ERROR: ", err);
-        setErrors(err);
-      } finally {
-        setLoading(false);
-      }
+  useEffect(() => {
+    const cachedResults = sessionStorage.getItem("cachedResults");
+
+    if (ref.current === cachedResults) return;
+
+    ref.current = cachedResults;
+
+    if (cachedResults) {
+      const parsed = JSON.parse(cachedResults);
+      console.log("CACHED RESULTS: ", parsed);
+      setAllCars(parsed);
+      setLoading(false);
+      return;
     }
 
     fetchAllCars();
   }, []);
 
+  async function fetchAllCars() {
+    try {
+      const url = "https://ebucars-car-dealership-website.onrender.com/cars";
+      const data = await fetch(url);
+      const results = await data.json();
+
+      console.log("FETCHED RESULTS: ", results);
+      setAllCars(results);
+      sessionStorage.setItem("cachedResults", JSON.stringify(results));
+      setLoading(false);
+    } catch (err) {
+      console.log("ERROR: ", err);
+      setErrors(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const newCars = allCars.filter((nwCr) => nwCr.condition === "New");
 
   const usedCars = allCars.filter((used) => used.condition === "Used");
-
-  console.log(usedCars);
 
   return (
     <div>
@@ -77,26 +92,24 @@ export default function Home() {
             <h2 className="text-3xl font-extrabold font-mono ">New Cars</h2>
 
             <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-5 gap-y-10 my-4 ">
-              {newCars
-                .map((nwCr) => (
-                  <li
-                    key={nwCr.id}
-                    className="hover:bg-gray-300 hover:scale-105 transition rounded-2xl overflow-hidden p-2.5"
-                  >
-                    <Link to={`/car_details/${nwCr.id}`}>
-                      <img
-                        src={nwCr.images[0]}
-                        alt={nwCr.name}
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
-                      <div>
-                        <h3 className="font-bold my-2">{nwCr.name}</h3>
-                        <p>${nwCr.price.toLocaleString()}</p>
-                      </div>
-                    </Link>
-                  </li>
-                ))
-                .slice(0, 3)}
+              {newCars.slice(0, 3).map((nwCr) => (
+                <li
+                  key={nwCr.id}
+                  className="hover:bg-gray-300 hover:scale-105 transition rounded-2xl overflow-hidden p-2.5"
+                >
+                  <Link to={`/car_details/${nwCr.id}`}>
+                    <img
+                      src={nwCr.images[0]}
+                      alt={nwCr.name}
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                    <div>
+                      <h3 className="font-bold my-2">{nwCr.name}</h3>
+                      <p>${nwCr.price.toLocaleString()}</p>
+                    </div>
+                  </Link>
+                </li>
+              ))}
             </ul>
 
             <div className="text-center mt-8">
@@ -113,26 +126,24 @@ export default function Home() {
             <h2 className="text-3xl font-extrabold font-mono ">Used Cars</h2>
 
             <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 my-4">
-              {usedCars
-                .map((used) => (
-                  <li
-                    key={used.id}
-                    className="hover:bg-gray-300 hover:scale-105 transition rounded-2xl overflow-hidden p-2.5"
-                  >
-                    <Link to={`/car_details/${used.id}`}>
-                      <img
-                        src={used.images[0]}
-                        alt={used.name}
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
-                      <div>
-                        <h3 className="font-bold my-2">{used.name}</h3>
-                        <p>${used.price.toLocaleString()}</p>
-                      </div>
-                    </Link>
-                  </li>
-                ))
-                .slice(0, 3)}
+              {usedCars.slice(0, 3).map((used) => (
+                <li
+                  key={used.id}
+                  className="hover:bg-gray-300 hover:scale-105 transition rounded-2xl overflow-hidden p-2.5"
+                >
+                  <Link to={`/car_details/${used.id}`}>
+                    <img
+                      src={used.images[0]}
+                      alt={used.name}
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                    <div>
+                      <h3 className="font-bold my-2">{used.name}</h3>
+                      <p>${used.price.toLocaleString()}</p>
+                    </div>
+                  </Link>
+                </li>
+              ))}
             </ul>
 
             <div className="text-center mt-8 pb-9 ">

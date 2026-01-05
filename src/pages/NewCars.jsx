@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 export default function NewCars() {
@@ -6,26 +6,42 @@ export default function NewCars() {
   const [errors, setErrors] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const ref = useRef(false);
+
   useEffect(() => {
-    async function fetchAllCars() {
-      try {
-        const url = "https://ebucars-car-dealership-website.onrender.com/cars";
-        const data = await fetch(url);
-        const results = await data.json();
+    const cachedNewCars = sessionStorage.getItem("cachedNewCars");
 
-        console.log("THESE ARE: ", results);
-        setAllCars(results);
-        setLoading(false);
-      } catch (err) {
-        console.log("ERROR: ", err);
-        setErrors(err);
-      } finally {
-        setLoading(false);
-      }
+    if (ref.current === cachedNewCars) return;
+
+    ref.current = cachedNewCars;
+
+    if (cachedNewCars) {
+      const parsed = JSON.parse(cachedNewCars);
+      console.log("CACHED NEW CARS: ", parsed);
+      setAllCars(parsed);
+      setLoading(false);
+      return;
     }
-
     fetchAllCars();
   }, []);
+
+  async function fetchAllCars() {
+    try {
+      const url = "https://ebucars-car-dealership-website.onrender.com/cars";
+      const data = await fetch(url);
+      const results = await data.json();
+
+      console.log("FETCHED RESULTS: ", results);
+      setAllCars(results);
+      sessionStorage.setItem("cachedNewCars", JSON.stringify(results));
+      setLoading(false);
+    } catch (err) {
+      console.log("ERROR: ", err);
+      setErrors(err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const newCars = allCars.filter((nwCr) => nwCr.condition === "New");
 
