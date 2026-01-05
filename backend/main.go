@@ -104,9 +104,18 @@ func main() {
 			return
 		}
 
-		// Step 3l: Send the cars back to the browser as JSON
+		//Step 3l: If no car was found, return a 404 error
+		if len(cars) == 0 {
+			http.Error(w, "Car not found", http.StatusNotFound)
+			return
+		}
+
+		// Step 3m: Send the cars back to the browser as JSON
 		json.NewEncoder(w).Encode(cars)
 	})
+
+
+
 
 	// ----------------------
 	// 4. Handler for fetching a single car by its ID
@@ -166,6 +175,9 @@ func main() {
 		// Step 4l: Send the first car in the response as JSON
 		json.NewEncoder(w).Encode(cars[0])
 	})
+
+	
+
 
 	// ----------------------
 	// 5. Start the server
