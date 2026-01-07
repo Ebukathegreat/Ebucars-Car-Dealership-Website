@@ -176,6 +176,14 @@ func main() {
 		json.NewEncoder(w).Encode(cars[0])
 	})
 
+
+	//	Wake Up Go Backend On Render Website
+		http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+
+
 	
 
 

@@ -2,7 +2,7 @@ import { faBars } from "@fortawesome/free-solid-svg-icons";
 import { faClose } from "@fortawesome/free-solid-svg-icons/faClose";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 export default function Navbar() {
   // auto close sidebar on resize
@@ -15,9 +15,10 @@ export default function Navbar() {
   }, []);
 
   const [open, setOpen] = useState(false);
-
   const location = useLocation();
   const pathname = location.pathname;
+  const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
 
   const linkStyle = ({ isActive }) => {
     if (isActive) {
@@ -60,16 +61,25 @@ export default function Navbar() {
       </div>
 
       {/* RIGHT: Search */}
-      <div className="hidden md:flex ml-auto">
-        <input
-          type="text"
-          placeholder="Search..."
-          className={`${
-            pathname === "/"
-              ? "bg-white"
-              : "bg-gray-600 text-white text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)]"
-          } p-2 rounded-md outline-none `}
-        />
+      <div className=" ml-auto">
+        <form
+          onSubmit={(e) => (
+            e.preventDefault(),
+            navigate(`/search_page?searchTerm=${searchTerm}`)
+          )}
+        >
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className={`${
+              pathname === "/"
+                ? "bg-white"
+                : "bg-gray-600 text-white text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)]"
+            } p-1 md:p-2 w-[180px] rounded-md outline-none `}
+          />
+        </form>
       </div>
 
       <div

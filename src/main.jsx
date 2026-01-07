@@ -8,6 +8,7 @@ import Cars from "./pages/Cars.jsx";
 import CarDetails from "./pages/CarDetails.jsx";
 import NewCars from "./pages/NewCars.jsx";
 import UsedCars from "./pages/UsedCars.jsx";
+import SearchPage from "./pages/SearchPage.jsx";
 
 export const router = createBrowserRouter([
   {
@@ -19,6 +20,7 @@ export const router = createBrowserRouter([
       { path: "car_details/:id", element: <CarDetails /> },
       { path: "/new_cars", element: <NewCars /> },
       { path: "/used_cars", element: <UsedCars /> },
+      { path: "/search_page", element: <SearchPage /> },
     ],
   },
 ]);
