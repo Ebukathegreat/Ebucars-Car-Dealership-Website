@@ -72,7 +72,7 @@ export default function UsedCars() {
     );
 
   return (
-    <div>
+    <div className="bg-red-600">
       <h1 className="font-bold text-[27px] md:text-4xl text-center my-4">
         Clean Used Cars For You
       </h1>
