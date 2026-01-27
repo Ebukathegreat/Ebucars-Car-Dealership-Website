@@ -1,40 +1,32 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
 
-export default function NewCars() {
+export default function Brands() {
+  const { brand } = useParams();
+
   const [allCars, setAllCars] = useState([]);
   const [errors, setErrors] = useState("");
   const [loading, setLoading] = useState(true);
   const location = useLocation();
   const params = new URLSearchParams(location.search).get("searchTerm");
 
-  // SIMPLE Fade In
-  const fadeIn = {
-    hidden: { opacity: 0, scale: 0 },
-    show: {
-      opacity: 1,
-      scale: 1,
-      transition: { duration: 0.6, ease: "easeOut" },
-    },
-  };
-
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  }, [brand]);
 
   useEffect(() => {
-    const cachedNewCars = sessionStorage.getItem("cachedNewCars");
+    const cachedCarBrands = sessionStorage.getItem("cachedCarBrands");
 
-    if (cachedNewCars) {
-      const parsed = JSON.parse(cachedNewCars);
-      console.log("CACHED NEW CARS: ", parsed);
+    if (cachedCarBrands) {
+      const parsed = JSON.parse(cachedCarBrands);
+      console.log("CACHED CAR BRANDS: ", parsed);
       setAllCars(parsed);
       setLoading(false);
       return;
     }
+
     fetchAllCars();
-  }, []);
+  }, [brand]);
 
   async function fetchAllCars() {
     try {
@@ -44,7 +36,7 @@ export default function NewCars() {
 
       console.log("FETCHED RESULTS: ", results);
       setAllCars(results);
-      sessionStorage.setItem("cachedNewCars", JSON.stringify(results));
+      sessionStorage.setItem("cachedCarBrands", JSON.stringify(results));
       setLoading(false);
     } catch (err) {
       console.log("ERROR: ", err);
@@ -54,11 +46,15 @@ export default function NewCars() {
     }
   }
 
-  const newCars = allCars.filter((nwCr) => nwCr.condition === "New");
+  const carBrand = allCars.filter(
+    (car) => car.brand.toLowerCase() === brand.trim()
+  );
+
+  console.log("CAR BRANDS: ", carBrand);
 
   const safeParam = params?.toLowerCase().trim() || "";
 
-  const newCarsBySearchTerm = newCars
+  const carNameBySearchTerm = carBrand
     .filter(
       (car) =>
         car.name.toLowerCase().includes(safeParam) ||
@@ -76,12 +72,12 @@ export default function NewCars() {
       return bStarts - aStarts; // true > false, so startsWith comes first
     });
 
-  console.log("NEW BY SEARCHTERM:", newCarsBySearchTerm);
+  console.log("CAR BY SEARCHTERM:", carNameBySearchTerm);
 
-  if (safeParam && newCarsBySearchTerm.length === 0)
+  if (safeParam && carNameBySearchTerm.length === 0)
     return (
       <p className="text-center  mt-6 font-semibold">
-        No new cars found for: “{params}”
+        No cars found for: “{params}”
       </p>
     );
 
@@ -103,49 +99,48 @@ export default function NewCars() {
     return (
       <div className="flex justify-center items-center h-screen">
         <p className="bg-pink-50 text-pink-700 px-6 py-4 rounded-xl font-medium shadow-sm text-center max-w-md">
-          Oops! Something went wrong while loading the New Cars. Don't worry,
-          please try again in a moment.
+          Oops! Something went wrong while loading the Cars. Don't worry, please
+          try again in a moment.
         </p>
       </div>
     );
 
   return (
     <div>
-      <motion.section
-        variants={fadeIn}
-        initial="hidden"
-        animate="show"
-        viewport={{ once: true }}
-      >
+      <div>
         <h1 className="font-bold text-[27px] md:text-4xl text-center my-4">
-          Brand New Cars For You
+          {brand.toLocaleUpperCase()} Cars For You
         </h1>
 
-        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 my-4 px-5 pb-6 ">
-          {newCarsBySearchTerm.map((nwCr) => (
+        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 my-4 px-5 pb-6">
+          {carNameBySearchTerm.map((car) => (
             <li
-              key={nwCr.id}
-              className="bg-[linear-gradient(rgba(79,62,124,0.95),rgba(31,29,48,0.95))] hover:bg-gray-900  hover:scale-105 transition rounded-2xl overflow-hidden p-3"
+              key={car.id}
+              className="bg-[linear-gradient(rgba(79,62,124,0.95),rgba(31,29,48,0.95))] hover:bg-gray-900   hover:scale-105 transition rounded-2xl overflow-hidden p-2.5"
             >
-              <Link to={`/car_details/${nwCr.id}`}>
+              <Link to={`/car_details/${car.id}`}>
                 <img
-                  src={nwCr.images[0]}
-                  alt={nwCr.name}
+                  src={car.images[0]}
+                  alt={car.name}
                   className="w-full h-48 object-cover rounded-lg"
                 />
                 <div>
-                  <h3 className="font-bold text-white my-2 text-lg">
-                    {nwCr.name}
+                  <h3 className="font-bold mt-2 text-white text-lg">
+                    {car.name}
                   </h3>
-                  <p className="font-bold text-white text-lg ">
-                    ${nwCr.price.toLocaleString()}
+                  <p className="my-1 font-semibold text-white text-lg">
+                    ${car.price.toLocaleString()}
+                  </p>
+
+                  <p className="text-sm text-white">
+                    {car.brand} • {car.year}
                   </p>
                 </div>
               </Link>
             </li>
           ))}
         </ul>
-      </motion.section>
+      </div>
     </div>
   );
 }

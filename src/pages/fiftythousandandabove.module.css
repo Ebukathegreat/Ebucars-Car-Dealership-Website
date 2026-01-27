@@ -1,0 +1,27 @@
+/* Base styles for both - The line starts at 0 width */
+.brandsBtn::after,
+.allBtn::after {
+  content: "";
+  width: 0;
+  height: 3px;
+  background: red;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: 0.5s ease-in-out;
+}
+
+/* Hover effects */
+.brandsBtn:hover,
+.allBtn:hover {
+  background: lightgray;
+}
+
+/* This class is toggled by React State */
+.active::after {
+  width: 100% !important;
+}
+.active:hover {
+  background: transparent;
+}

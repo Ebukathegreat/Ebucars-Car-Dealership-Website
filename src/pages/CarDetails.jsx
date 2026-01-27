@@ -7,14 +7,12 @@ export default function CarDetails() {
   const [errors, setErrors] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const ref = useRef(false);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   useEffect(() => {
-    const cachedDetails = sessionStorage.getItem("cachedDetails");
-
-    if (ref.current === cachedDetails) return;
-
-    ref.current = cachedDetails;
+    const cachedDetails = sessionStorage.getItem(`cachedDetails_${id}`);
 
     if (cachedDetails) {
       const parsed = JSON.parse(cachedDetails);
@@ -35,7 +33,7 @@ export default function CarDetails() {
 
       console.log("FETCHED RESULTS: ", results);
       setCarDetails(results);
-      sessionStorage.setItem("cachedDetails", JSON.stringify(results));
+      sessionStorage.setItem(`cachedDetails_${id}`, JSON.stringify(results));
 
       setLoading(false);
     } catch (err) {
@@ -81,7 +79,7 @@ export default function CarDetails() {
     );
 
   return (
-    <div className="h-auto sm:h-screen  p-6 bg-[linear-gradient(rgba(31,29,48,0.7),rgba(79,62,124,0.7))]">
+    <div className="h-auto sm:h-screen  p-6 bg-[linear-gradient(rgba(79,62,124,0.95),rgba(31,29,48,0.95))]">
       <ul>
         <li
           key={carDetails.id}
@@ -92,7 +90,7 @@ export default function CarDetails() {
             <img
               src={carDetails?.images?.[0]}
               alt={carDetails.name}
-              className="w-full h-[92vh] object-cover rounded-lg"
+              className="  bg-amber-400 sm:h-[92vh] object-contain sm:object-cover rounded-lg"
             />
           </div>
 

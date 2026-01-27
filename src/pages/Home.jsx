@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./home.module.css";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 export default function Home() {
   const [allCars, setAllCars] = useState([]);
@@ -9,17 +10,24 @@ export default function Home() {
 
   const ref = useRef(false);
 
+  // SIMPLE slide-in from the right
+  const slideFromRight = {
+    hidden: { opacity: 0, x: 110 },
+    show: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.6, ease: "easeOut" },
+    },
+  };
+
   useEffect(() => {
     const cachedResults = sessionStorage.getItem("cachedResults");
 
     if (ref.current === cachedResults) return;
-
     ref.current = cachedResults;
 
     if (cachedResults) {
-      const parsed = JSON.parse(cachedResults);
-      console.log("CACHED RESULTS: ", parsed);
-      setAllCars(parsed);
+      setAllCars(JSON.parse(cachedResults));
       setLoading(false);
       return;
     }
@@ -29,133 +37,205 @@ export default function Home() {
 
   async function fetchAllCars() {
     try {
-      const url = "https://ebucars-car-dealership-website.onrender.com/cars";
-      const data = await fetch(url);
-      const results = await data.json();
-
-      console.log("FETCHED RESULTS: ", results);
-      setAllCars(results);
-      sessionStorage.setItem("cachedResults", JSON.stringify(results));
-      setLoading(false);
+      const res = await fetch(
+        "https://ebucars-car-dealership-website.onrender.com/cars"
+      );
+      const data = await res.json();
+      setAllCars(data);
+      sessionStorage.setItem("cachedResults", JSON.stringify(data));
     } catch (err) {
-      console.log("ERROR: ", err);
-      setErrors(err);
+      setErrors("Failed to load cars");
     } finally {
       setLoading(false);
     }
   }
 
-  const newCars = allCars.filter((nwCr) => nwCr.condition === "New");
-
-  const usedCars = allCars.filter((used) => used.condition === "Used");
+  const newCars = allCars.filter((car) => car.condition === "New");
+  const usedCars = allCars.filter((car) => car.condition === "Used");
 
   return (
     <div>
+      {/* HERO */}
       <div className={styles.hero}>
-        <section>
-          {/* Content */}
+        <section className="flex items-center justify-center h-[70vh] px-3">
+          <div className="text-white md:text-center">
+            <h1 className="text-5xl md:text-6xl font-extrabold leading-tight">
+              Find Your{" "}
+              <span className="text-[gold] block md:inline">Perfect Drive</span>
+            </h1>
 
-          <div className="md:flex items-center justify-center h-[70vh]">
-            <div className="px-3 md:px-0 pt-18 md:mt-0">
-              <h1 className="text-5xl md:text-6xl text-white font-extrabold leading-tight tracking-tight md:text-center text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)]">
-                Find Your{" "}
-                <span className="text-[gold] block md:inline">
-                  Perfect Drive
-                </span>
-              </h1>
+            <p className="mt-4 text-base md:text-lg font-semibold">
+              Explore premium new and used vehicles built for performance,
+              comfort, and reliability.
+            </p>
 
-              {/* Subtext */}
-              <p className=" mt-4 md:mt-2 text-base md:text-lg text-white font-semibold text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)]">
-                Explore premium new and used vehicles built for performance,
-                comfort, and reliability — hand-picked for drivers who expect
-                more.
-              </p>
-
-              <div className="mt-7 md:mt-3 md:text-center">
-                <button className="bg-[gold] text-white text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)]  font-semibold text-xl px-16 py-2 rounded-md hover:bg-amber-300 transition cursor-pointer ">
-                  Make Your Pick
-                </button>
-              </div>
+            <div className="mt-6">
+              <Link
+                to="/all_cars"
+                className="bg-[gold] text-white font-semibold text-xl px-16 py-2 rounded-md hover:bg-amber-300 transition"
+              >
+                Make Your Pick
+              </Link>
             </div>
           </div>
         </section>
       </div>
 
+      {/* ERROR */}
+      {errors && (
+        <div className="flex justify-center my-8">
+          <p className="bg-pink-50 text-pink-700 px-6 py-4 rounded-xl font-medium">
+            {errors}
+          </p>
+        </div>
+      )}
+
+      {/* LOADING */}
       {loading ? (
-        <div className="flex items-center gap-2 p-4">
+        <div className="flex items-center gap-2 p-6">
           <h2 className="text-2xl font-bold">Loading Cars...</h2>
-          <span className="   text-2xl animate-spin">🚙</span>
+          <span className="text-2xl animate-spin">🚙</span>
         </div>
       ) : (
-        <div>
-          <section className="py-4 px-7">
-            <h2 className="text-3xl font-extrabold font-mono ">New Cars</h2>
+        <>
+          {/* NEW CARS */}
+          <motion.section
+            variants={slideFromRight}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="py-6 px-7"
+          >
+            <h2 className="text-3xl font-extrabold font-mono">New Cars</h2>
 
-            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-5 gap-y-10 my-4 ">
-              {newCars.slice(0, 3).map((nwCr) => (
-                <li
-                  key={nwCr.id}
-                  className="hover:bg-gray-300 hover:scale-105 transition rounded-2xl overflow-hidden p-2.5"
-                >
-                  <Link to={`/car_details/${nwCr.id}`}>
-                    <img
-                      src={nwCr.images[0]}
-                      alt={nwCr.name}
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                    <div>
-                      <h3 className="font-bold my-2">{nwCr.name}</h3>
-                      <p>${nwCr.price.toLocaleString()}</p>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 my-6">
+              {newCars.slice(0, 3).map((car) => (
+                <li key={car.id} className="rounded-2xl p-2.5">
+                  <Link to={`/car_details/${car.id}`}>
+                    <div className="w-full h-48 overflow-hidden rounded-lg">
+                      <img
+                        src={car.images[0]}
+                        alt={car.name}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
+
+                    <h3 className="font-bold my-2">{car.name}</h3>
+                    <p>${car.price.toLocaleString()}</p>
                   </Link>
                 </li>
               ))}
             </ul>
 
-            <div className="text-center mt-8">
+            <div className="text-center">
               <Link
                 to="/new_cars"
-                className="bg-[linear-gradient(rgba(31,29,48,0.7),rgba(79,62,124,0.7))] py-2 px-7 text-center rounded-3xl font-semibold cursor-pointer hover:bg-amber-300 text-[gold] text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)]"
+                className="bg-gradient-to-r from-indigo-900 to-purple-700 py-2 px-8 rounded-3xl font-semibold text-[gold]"
               >
                 View More New Cars
               </Link>
             </div>
-          </section>
+          </motion.section>
 
-          <section className="py-4 px-7 mt-4">
-            <h2 className="text-3xl font-extrabold font-mono ">Used Cars</h2>
+          {/* USED CARS */}
+          <motion.section
+            variants={slideFromRight}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="py-6 px-7"
+          >
+            <h2 className="text-3xl font-extrabold font-mono">Used Cars</h2>
 
-            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 my-4">
-              {usedCars.slice(0, 3).map((used) => (
-                <li
-                  key={used.id}
-                  className="hover:bg-gray-300 hover:scale-105 transition rounded-2xl overflow-hidden p-2.5"
-                >
-                  <Link to={`/car_details/${used.id}`}>
-                    <img
-                      src={used.images[0]}
-                      alt={used.name}
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                    <div>
-                      <h3 className="font-bold my-2">{used.name}</h3>
-                      <p>${used.price.toLocaleString()}</p>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 my-6">
+              {usedCars.slice(0, 3).map((car) => (
+                <li key={car.id} className="rounded-2xl p-2.5">
+                  <Link to={`/car_details/${car.id}`}>
+                    <div className="w-full h-48 overflow-hidden rounded-lg">
+                      <img
+                        src={car.images[0]}
+                        alt={car.name}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
+
+                    <h3 className="font-bold my-2">{car.name}</h3>
+                    <p>${car.price.toLocaleString()}</p>
                   </Link>
                 </li>
               ))}
             </ul>
 
-            <div className="text-center mt-8 pb-9 ">
+            <div className="text-center">
               <Link
                 to="/used_cars"
-                className="bg-[linear-gradient(rgba(31,29,48,0.7),rgba(79,62,124,0.7))] py-2 px-7 text-center rounded-3xl font-semibold cursor-pointer hover:bg-amber-300 text-[gold] text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)]"
+                className="bg-gradient-to-r from-indigo-900 to-purple-700 py-2 px-8 rounded-3xl font-semibold text-[gold]"
               >
                 View More Used Cars
               </Link>
             </div>
-          </section>
-        </div>
+          </motion.section>
+
+          {/* BRANDS  */}
+          <motion.section
+            variants={slideFromRight}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="py-10 px-7"
+          >
+            <h2 className="font-bold text-3xl mb-6">Brands</h2>
+            <ul className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+              {[
+                ["land rover", "/Land Rover Logo 2.jpg"],
+                ["toyota", "/Toyota Logo.png"],
+                ["bmw", "/BMW LOGO.jpg"],
+                ["mercedes", "/Mercedes-Benz-Logo.png"],
+              ].map(([brand, img]) => (
+                <li
+                  key={brand}
+                  className="hover:scale-110 transition border sm:border-0 rounded-2xl  hover:border-green-700"
+                >
+                  <Link to={`/brands/${brand}`}>
+                    <img
+                      src={img}
+                      alt={brand}
+                      className="w-full h-40 object-contain rounded-lg"
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </motion.section>
+
+          {/* PRICES  */}
+          <motion.section
+            variants={slideFromRight}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="py-10 px-7 "
+          >
+            <h2 className="font-bold text-3xl mb-12 ">Prices</h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8   place-items-center  ">
+              <Link
+                to="/below_50000"
+                className=" text-xl sm:text-2xl font-semibold bg-[linear-gradient(rgba(31,29,48,0.95),rgba(79,62,124,0.95))] text-white px-15 py-5 sm:px-30 sm:py-10"
+              >
+                Below $50,000
+              </Link>
+              <Link
+                to="/fiftythousand_and_above"
+                className=" text-xl sm:text-2xl font-semibold bg-[linear-gradient(rgba(31,29,48,0.95),rgba(79,62,124,0.95))] text-white px-10 py-5 sm:px-30 sm:py-10"
+              >
+                $50,000 and Above
+              </Link>
+            </div>
+          </motion.section>
+        </>
       )}
     </div>
   );

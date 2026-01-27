@@ -5,30 +5,47 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 export default function Navbar() {
-  // auto close sidebar on resize
-  useEffect(() => {
-    function handleResize() {
-      if (window.innerWidth >= 768) setOpen(false);
-    }
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const pathname = location.pathname;
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const isExcludedPage =
+    pathname === "/below_50000" || pathname.startsWith("/car_details");
+
+  // auto close sidebar on resize + track window width
+  useEffect(() => {
+    function handleResize() {
+      setWindowWidth(window.innerWidth); // update width state
+
+      //close menu on resize
+      if (window.innerWidth >= 768) setOpen(false);
+    }
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const linkStyle = ({ isActive }) => {
     if (isActive) {
       return "text-green-500 font-bold px-4 py-2 block";
     }
 
-    return pathname === "/" || window.innerWidth <= 600
+    return pathname === "/" || windowWidth <= 600
       ? "text-white hover:text-yellow-400 font-bold px-4 py-2 block transition-colors duration-300"
       : "text-black hover:text-yellow-400 font-bold px-4 py-2 block transition-colors duration-300";
   };
+
+  function scrollToSectionById(e, id) {
+    e.preventDefault();
+    const sectionId = document.getElementById(id);
+
+    if (sectionId) {
+      sectionId.scrollIntoView({ behavior: "smooth" });
+    }
+  }
 
   return (
     <nav
@@ -37,7 +54,10 @@ export default function Navbar() {
       } flex items-center px-3.5 md:px-8 h-16 `}
     >
       {/* LEFT: Logo */}
-      <Link to="/" className="text-white font-bold text-xl">
+      <Link
+        to="/"
+        className="text-[gold] text-shadow-[1px_1px_2px_rgba(0,0,0,1)] font-extrabold text-2xl"
+      >
         Ebucars
       </Link>
 
@@ -51,28 +71,61 @@ export default function Navbar() {
           Used Cars
         </NavLink>
 
-        <NavLink to="/about" end className={linkStyle}>
+        <a
+          href="#aboutId"
+          className={`font-bold px-4 py-2 block transition-colors duration-300
+    ${pathname === "/" ? "text-white" : "text-black"}
+    hover:text-yellow-400
+  `}
+          onClick={(e) => scrollToSectionById(e, "aboutId")}
+        >
           About
-        </NavLink>
+        </a>
 
-        <NavLink to="/contact" end className={linkStyle}>
+        <a
+          href="#contactId"
+          className={`font-bold px-4 py-2 block transition-colors duration-300
+    ${pathname === "/" ? "text-white" : "text-black"}
+    hover:text-yellow-400
+  `}
+          onClick={(e) => scrollToSectionById(e, "contactId")}
+        >
           Contact
-        </NavLink>
+        </a>
       </div>
 
       {/* RIGHT: Search */}
-      <div className=" ml-auto">
+      <div className={`ml-auto ${isExcludedPage ? "hidden" : "block"}`}>
         <form
-          onSubmit={(e) => (
-            e.preventDefault(),
-            navigate(`/search_page?searchTerm=${searchTerm}`)
-          )}
+          onSubmit={(e) => {
+            e.preventDefault();
+
+            // If user is on pages that aren't the home and search page, disable the submit button to prevent a redirect to the search page because the onChange effect is already in place on those other pages. No need for onChange and onSubmit at the same time.
+            if (pathname !== "/" && pathname !== "/search_page") {
+              return;
+            }
+
+            navigate(`/search_page?searchTerm=${searchTerm}`);
+          }}
         >
           <input
             type="text"
             placeholder="Search..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+
+              //Don't work on home and search pages
+              if (pathname === "/" || pathname === "/search_page") return;
+
+              if (e.target.value.trim() === "") {
+                // 🔥 remove query completely
+                navigate(pathname);
+              } else {
+                // add / update query
+                navigate(`?searchTerm=${e.target.value}`);
+              }
+            }}
             className={`${
               pathname === "/"
                 ? "bg-white"
@@ -134,23 +187,25 @@ export default function Navbar() {
             Used Cars
           </NavLink>
 
-          <NavLink
-            to="/about"
-            end
-            onClick={() => setOpen(false)}
-            className={linkStyle}
+          <a
+            href="#aboutId"
+            className={`font-bold px-4 py-2 block transition-colors duration-300 `}
+            onClick={(e) => {
+              setOpen(false), scrollToSectionById(e, "aboutId");
+            }}
           >
             About
-          </NavLink>
+          </a>
 
-          <NavLink
-            to="/contact"
-            end
-            onClick={() => setOpen(false)}
-            className={linkStyle}
+          <a
+            href="#aboutId"
+            className={`font-bold px-4 py-2 block transition-colors duration-300 `}
+            onClick={(e) => {
+              setOpen(false), scrollToSectionById(e, "contactId");
+            }}
           >
             Contact
-          </NavLink>
+          </a>
         </ul>
       </div>
     </nav>

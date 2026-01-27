@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
 
 export default function SearchPage() {
   const location = useLocation();
@@ -8,6 +9,16 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState("");
   const [notFound, setNotFound] = useState(false);
+
+  // SIMPLE Fade In
+  const fadeIn = {
+    hidden: { opacity: 0, scale: 0 },
+    show: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.6, ease: "easeOut" },
+    },
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -96,29 +107,43 @@ export default function SearchPage() {
         </div>
       ) : (
         <div>
-          <h1 className="font-bold text-[27px] md:text-4xl text-center my-4">
-            Results for: "{params}"
-          </h1>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 my-4 px-5 ">
-            {searchedCar.map((srchdCr) => (
-              <li
-                key={srchdCr.id}
-                className="hover:bg-gray-300 hover:scale-105 transition rounded-2xl overflow-hidden p-2.5"
-              >
-                <Link to={`/car_details/${srchdCr.id}`}>
-                  <img
-                    src={srchdCr.images[0]}
-                    alt={srchdCr.name}
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                  <div>
-                    <h3 className="font-bold my-2">{srchdCr.name}</h3>
-                    <p>${srchdCr.price.toLocaleString()}</p>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <motion.section
+            variants={fadeIn}
+            initial="hidden"
+            animate="show"
+            viewport={{ once: true }}
+          >
+            {params && (
+              <h1 className="font-bold text-[27px] md:text-4xl text-center my-4">
+                Results for: "{params}"
+              </h1>
+            )}
+
+            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 my-4 px-5 ">
+              {searchedCar.map((srchdCr) => (
+                <li
+                  key={srchdCr.id}
+                  className="bg-[linear-gradient(rgba(79,62,124,0.95),rgba(31,29,48,0.95))] hover:bg-gray-900 hover:scale-105 transition rounded-2xl overflow-hidden p-2.5"
+                >
+                  <Link to={`/car_details/${srchdCr.id}`}>
+                    <img
+                      src={srchdCr.images[0]}
+                      alt={srchdCr.name}
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                    <div>
+                      <h3 className="font-bold text-white my-2 text-lg">
+                        {srchdCr.name}
+                      </h3>
+                      <p className="font-bold text-white text-lg">
+                        ${srchdCr.price.toLocaleString()}
+                      </p>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </motion.section>
         </div>
       )}
     </div>

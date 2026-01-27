@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
-export default function NewCars() {
+export default function AllCars() {
   const [allCars, setAllCars] = useState([]);
   const [errors, setErrors] = useState("");
   const [loading, setLoading] = useState(true);
+
   const location = useLocation();
   const params = new URLSearchParams(location.search).get("searchTerm");
 
@@ -24,15 +25,16 @@ export default function NewCars() {
   }, []);
 
   useEffect(() => {
-    const cachedNewCars = sessionStorage.getItem("cachedNewCars");
+    const cachedAllCars = sessionStorage.getItem("cachedAllCars");
 
-    if (cachedNewCars) {
-      const parsed = JSON.parse(cachedNewCars);
-      console.log("CACHED NEW CARS: ", parsed);
+    if (cachedAllCars) {
+      const parsed = JSON.parse(cachedAllCars);
+      console.log("CACHED ALL CARS: ", parsed);
       setAllCars(parsed);
       setLoading(false);
       return;
     }
+
     fetchAllCars();
   }, []);
 
@@ -44,7 +46,7 @@ export default function NewCars() {
 
       console.log("FETCHED RESULTS: ", results);
       setAllCars(results);
-      sessionStorage.setItem("cachedNewCars", JSON.stringify(results));
+      sessionStorage.setItem("cachedAllCars", JSON.stringify(results));
       setLoading(false);
     } catch (err) {
       console.log("ERROR: ", err);
@@ -54,11 +56,9 @@ export default function NewCars() {
     }
   }
 
-  const newCars = allCars.filter((nwCr) => nwCr.condition === "New");
-
   const safeParam = params?.toLowerCase().trim() || "";
 
-  const newCarsBySearchTerm = newCars
+  const allCarsBySearchTerm = allCars
     .filter(
       (car) =>
         car.name.toLowerCase().includes(safeParam) ||
@@ -76,18 +76,18 @@ export default function NewCars() {
       return bStarts - aStarts; // true > false, so startsWith comes first
     });
 
-  console.log("NEW BY SEARCHTERM:", newCarsBySearchTerm);
+  console.log("ALL CARS BY SEARCHTERM:", allCarsBySearchTerm);
 
-  if (safeParam && newCarsBySearchTerm.length === 0)
+  if (safeParam && allCarsBySearchTerm.length === 0)
     return (
       <p className="text-center  mt-6 font-semibold">
-        No new cars found for: “{params}”
+        No cars found for: “{params}”
       </p>
     );
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen ">
+      <div className="flex justify-center items-center h-screen ">
         <div>
           <div className="flex items-center justify-center ">
             <p className="animate-spin text-4xl md:text-5xl ">🚙</p>
@@ -103,8 +103,8 @@ export default function NewCars() {
     return (
       <div className="flex justify-center items-center h-screen">
         <p className="bg-pink-50 text-pink-700 px-6 py-4 rounded-xl font-medium shadow-sm text-center max-w-md">
-          Oops! Something went wrong while loading the New Cars. Don't worry,
-          please try again in a moment.
+          Oops! Something went wrong while loading the Cars. Don't worry, please
+          try again in a moment.
         </p>
       </div>
     );
@@ -118,27 +118,27 @@ export default function NewCars() {
         viewport={{ once: true }}
       >
         <h1 className="font-bold text-[27px] md:text-4xl text-center my-4">
-          Brand New Cars For You
+          All Available Cars At The Moment
         </h1>
 
-        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 my-4 px-5 pb-6 ">
-          {newCarsBySearchTerm.map((nwCr) => (
+        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 my-4 px-5 pb-8 ">
+          {allCarsBySearchTerm.map((car) => (
             <li
-              key={nwCr.id}
-              className="bg-[linear-gradient(rgba(79,62,124,0.95),rgba(31,29,48,0.95))] hover:bg-gray-900  hover:scale-105 transition rounded-2xl overflow-hidden p-3"
+              key={car.id}
+              className=" bg-[linear-gradient(rgba(79,62,124,0.95),rgba(31,29,48,0.95))] hover:bg-gray-900  hover:scale-105 transition rounded-2xl overflow-hidden p-2.5"
             >
-              <Link to={`/car_details/${nwCr.id}`}>
+              <Link to={`/car_details/${car.id}`}>
                 <img
-                  src={nwCr.images[0]}
-                  alt={nwCr.name}
+                  src={car.images[0]}
+                  alt={car.name}
                   className="w-full h-48 object-cover rounded-lg"
                 />
                 <div>
                   <h3 className="font-bold text-white my-2 text-lg">
-                    {nwCr.name}
+                    {car.name}
                   </h3>
-                  <p className="font-bold text-white text-lg ">
-                    ${nwCr.price.toLocaleString()}
+                  <p className="font-bold text-white text-lg">
+                    ${car.price.toLocaleString()}
                   </p>
                 </div>
               </Link>

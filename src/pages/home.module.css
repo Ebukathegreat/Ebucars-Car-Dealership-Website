@@ -6,12 +6,26 @@
     ),
     url("/Silver\ Range\ Rover\ Velar\ 2022\ ChatGPT\ Image\ Jan\ 1\,\ 2026\,\ 04_13_37\ PM.png");
   background-position: center;
-  background-sie: 100% 100%;
   background-repeat: no-repeat;
+}
+
+.brandsSection {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 30px;
+  align-items: start;
+}
+.brandsSection div {
+  background: red;
+}
+.brandsSection img {
+  width: 100%;
+  height: auto;
 }
 
 @media all and (max-width: 600px) {
   .hero {
     min-height: 72vh;
+    padding: 20px 10px;
   }
 }
