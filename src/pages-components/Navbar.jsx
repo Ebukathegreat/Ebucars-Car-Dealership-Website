@@ -76,7 +76,9 @@ export default function Navbar() {
       {/* LEFT: Logo */}
       <Link
         to="/"
-        className="text-[gold]  text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)] font-extrabold text-2xl"
+        className={` ${
+          pathname !== "/" ? "text-slate-900" : "text-[gold]"
+        }   text-shadow-[1px_1px_2px_rgba(0,0,0,0.5)] font-extrabold text-2xl`}
       >
         Ebucars
       </Link>
@@ -157,8 +159,8 @@ export default function Navbar() {
             className={`${
               pathname === "/"
                 ? "bg-white"
-                : "bg-gray-600 text-white text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)]"
-            } p-2 w-[180px] rounded-md outline-none `}
+                : "bg-gray-600 text-white text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)] "
+            } p-1.5 sm:p-2 w-[180px] rounded-md outline-none `}
           />
         </form>
       </div>

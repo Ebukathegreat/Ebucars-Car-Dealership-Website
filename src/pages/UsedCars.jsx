@@ -98,7 +98,7 @@ export default function UsedCars() {
   }
 
   return (
-    <div className="bg-yellow-600">
+    <div>
       <motion.section
         variants={fadeIn}
         initial={isFirstMount.current ? "hidden" : false}

@@ -60,7 +60,7 @@ export default function Home() {
         <section className="flex items-center justify-center h-[70vh] px-3 ">
           <div className="text-white md:text-center  sm:mt-8 ">
             <h1 className="text-5xl md:text-6xl font-extrabold leading-tight  text-center">
-              BRANCH Find Your{" "}
+              Find Your{" "}
               <span className="text-[gold] block sm:inline">Perfect Drive</span>
             </h1>
 
