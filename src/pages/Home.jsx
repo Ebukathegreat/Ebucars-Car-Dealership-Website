@@ -50,8 +50,12 @@ export default function Home() {
     }
   }
 
-  const newCars = allCars.filter((car) => car.condition === "New");
-  const usedCars = allCars.filter((car) => car.condition === "Used");
+  const newCars = Array.isArray(allCars)
+    ? allCars.filter((car) => car.condition === "New")
+    : [];
+  const usedCars = Array.isArray(allCars)
+    ? allCars.filter((car) => car.condition === "Used")
+    : [];
 
   return (
     <div className=" w-[100vw] overflow-x-hidden">
