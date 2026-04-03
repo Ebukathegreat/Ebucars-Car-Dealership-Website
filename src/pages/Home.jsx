@@ -37,12 +37,17 @@ export default function Home() {
 
   async function fetchAllCars() {
     try {
-      const res = await fetch(
-        "https://ebucars-car-dealership-website.onrender.com/cars"
-      );
+      const res = await fetch("https://onrender.com");
       const data = await res.json();
-      setAllCars(data);
-      sessionStorage.setItem("cachedResults", JSON.stringify(data));
+
+      // LOOK HERE: We need to access data.cars because that is the actual array
+      if (data && Array.isArray(data.cars)) {
+        setAllCars(data.cars);
+        sessionStorage.setItem("cachedResults", JSON.stringify(data.cars));
+      } else {
+        setAllCars([]);
+        setErrors("Unexpected data format from server");
+      }
     } catch (err) {
       setErrors("Failed to load cars");
     } finally {
