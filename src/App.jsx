@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import Navbar from "./pages-components/Navbar";
 import Footer from "./pages-components/Footer";
+import ScrollToTopButtonComp from "./pages-components/ScrollToTopButtonComp";
 
 export default function App() {
   return (
@@ -10,6 +11,8 @@ export default function App() {
       <main className="flex-grow">
         <Outlet />
       </main>
+
+      <ScrollToTopButtonComp />
 
       <Footer />
     </div>

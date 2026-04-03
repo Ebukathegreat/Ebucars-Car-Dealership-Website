@@ -54,27 +54,27 @@ export default function Home() {
   const usedCars = allCars.filter((car) => car.condition === "Used");
 
   return (
-    <div>
+    <div className=" w-[100vw] overflow-x-hidden">
       {/* HERO */}
       <div className={styles.hero}>
-        <section className="flex items-center justify-center h-[70vh] px-3">
-          <div className="text-white md:text-center">
-            <h1 className="text-5xl md:text-6xl font-extrabold leading-tight">
-              Find Your{" "}
-              <span className="text-[gold] block md:inline">Perfect Drive</span>
+        <section className="flex items-center justify-center h-[70vh] px-3 ">
+          <div className="text-white md:text-center  sm:mt-8 ">
+            <h1 className="text-5xl md:text-6xl font-extrabold leading-tight  text-center">
+              BRANCH Find Your{" "}
+              <span className="text-[gold] block sm:inline">Perfect Drive</span>
             </h1>
 
-            <p className="mt-4 text-base md:text-lg font-semibold">
+            <p className="mt-4 text-base md:text-lg font-semibold  text-center">
               Explore premium new and used vehicles built for performance,
               comfort, and reliability.
             </p>
 
-            <div className="mt-6">
+            <div className="mt-6  ">
               <Link
                 to="/all_cars"
-                className="bg-[gold] text-white font-semibold text-xl px-16 py-2 rounded-md hover:bg-amber-300 transition"
+                className="bg-[gold] text-white text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)] font-semibold text-xl px-16 py-2 rounded-md hover:bg-amber-300 transition block m-auto max-w-fit"
               >
-                Make Your Pick
+                View All Cars
               </Link>
             </div>
           </div>
@@ -110,7 +110,10 @@ export default function Home() {
 
             <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 my-6">
               {newCars.slice(0, 3).map((car) => (
-                <li key={car.id} className="rounded-2xl p-2.5">
+                <li
+                  key={car.id}
+                  className="rounded-2xl p-2.5 hover:scale-110 transition"
+                >
                   <Link to={`/car_details/${car.id}`}>
                     <div className="w-full h-48 overflow-hidden rounded-lg">
                       <img
@@ -122,7 +125,9 @@ export default function Home() {
                     </div>
 
                     <h3 className="font-bold my-2">{car.name}</h3>
-                    <p>${car.price.toLocaleString()}</p>
+                    <p className="font-semibold">
+                      ${car.price.toLocaleString()}
+                    </p>
                   </Link>
                 </li>
               ))}
@@ -150,7 +155,10 @@ export default function Home() {
 
             <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 my-6">
               {usedCars.slice(0, 3).map((car) => (
-                <li key={car.id} className="rounded-2xl p-2.5">
+                <li
+                  key={car.id}
+                  className="rounded-2xl p-2.5 hover:scale-110 transition"
+                >
                   <Link to={`/car_details/${car.id}`}>
                     <div className="w-full h-48 overflow-hidden rounded-lg">
                       <img
@@ -162,7 +170,9 @@ export default function Home() {
                     </div>
 
                     <h3 className="font-bold my-2">{car.name}</h3>
-                    <p>${car.price.toLocaleString()}</p>
+                    <p className="font-semibold">
+                      ${car.price.toLocaleString()}
+                    </p>
                   </Link>
                 </li>
               ))}
@@ -220,16 +230,16 @@ export default function Home() {
           >
             <h2 className="font-bold text-3xl mb-12 ">Prices</h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8   place-items-center  ">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8  justify-between items-center  ">
               <Link
                 to="/below_50000"
-                className=" text-xl sm:text-2xl font-semibold bg-[linear-gradient(rgba(31,29,48,0.95),rgba(79,62,124,0.95))] text-white px-15 py-5 sm:px-30 sm:py-10"
+                className=" text-xl sm:text-2xl font-semibold bg-[linear-gradient(rgba(31,29,48,0.95),rgba(79,62,124,0.95))] text-white hover:text-amber-300 text-center py-7"
               >
                 Below $50,000
               </Link>
               <Link
                 to="/fiftythousand_and_above"
-                className=" text-xl sm:text-2xl font-semibold bg-[linear-gradient(rgba(31,29,48,0.95),rgba(79,62,124,0.95))] text-white px-10 py-5 sm:px-30 sm:py-10"
+                className=" text-xl sm:text-2xl font-semibold bg-[linear-gradient(rgba(31,29,48,0.95),rgba(79,62,124,0.95))] text-white hover:text-amber-300 text-center py-7"
               >
                 $50,000 and Above
               </Link>

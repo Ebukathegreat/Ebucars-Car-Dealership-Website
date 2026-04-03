@@ -2,7 +2,13 @@ import { faBars } from "@fortawesome/free-solid-svg-icons";
 import { faClose } from "@fortawesome/free-solid-svg-icons/faClose";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  NavLink,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -10,10 +16,17 @@ export default function Navbar() {
   const pathname = location.pathname;
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+  const { id } = useParams();
 
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const isExcludedPage =
-    pathname === "/below_50000" || pathname.startsWith("/car_details");
+    pathname === "/below_50000" ||
+    pathname === "/fiftythousand_and_above" ||
+    pathname.startsWith("/car_details");
+
+  useEffect(() => {
+    setSearchTerm("");
+  }, [pathname]);
 
   // auto close sidebar on resize + track window width
   useEffect(() => {
@@ -33,7 +46,9 @@ export default function Navbar() {
       return "text-green-500 font-bold px-4 py-2 block";
     }
 
-    return pathname === "/" || windowWidth <= 600
+    return pathname === "/" ||
+      pathname === `/car_details/${id}` ||
+      windowWidth <= 600
       ? "text-white hover:text-yellow-400 font-bold px-4 py-2 block transition-colors duration-300"
       : "text-black hover:text-yellow-400 font-bold px-4 py-2 block transition-colors duration-300";
   };
@@ -50,13 +65,18 @@ export default function Navbar() {
   return (
     <nav
       className={`${
-        pathname === "/" ? " absolute top-0 left-0 w-full  " : "relative"
+        pathname === "/" ? " absolute top-0 left-0 w-full " : "relative"
+      } ${
+        pathname === `/car_details/${id}`
+          ? "bg-[linear-gradient(rgba(31,29,48,0.95),rgba(79,62,124,0.95))] "
+          : ""
+      }
       } flex items-center px-3.5 md:px-8 h-16 `}
     >
       {/* LEFT: Logo */}
       <Link
         to="/"
-        className="text-[gold] text-shadow-[1px_1px_2px_rgba(0,0,0,1)] font-extrabold text-2xl"
+        className="text-[gold]  text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)] font-extrabold text-2xl"
       >
         Ebucars
       </Link>
@@ -74,7 +94,11 @@ export default function Navbar() {
         <a
           href="#aboutId"
           className={`font-bold px-4 py-2 block transition-colors duration-300
-    ${pathname === "/" ? "text-white" : "text-black"}
+    ${
+      pathname === "/" || pathname === `/car_details/${id}`
+        ? "text-white"
+        : "text-black"
+    }
     hover:text-yellow-400
   `}
           onClick={(e) => scrollToSectionById(e, "aboutId")}
@@ -85,7 +109,11 @@ export default function Navbar() {
         <a
           href="#contactId"
           className={`font-bold px-4 py-2 block transition-colors duration-300
-    ${pathname === "/" ? "text-white" : "text-black"}
+    ${
+      pathname === "/" || pathname === `/car_details/${id}`
+        ? "text-white"
+        : "text-black"
+    }
     hover:text-yellow-400
   `}
           onClick={(e) => scrollToSectionById(e, "contactId")}
@@ -130,14 +158,16 @@ export default function Navbar() {
               pathname === "/"
                 ? "bg-white"
                 : "bg-gray-600 text-white text-shadow-[1px_1px_2px_rgba(0,0,0,0.8)]"
-            } p-1 md:p-2 w-[180px] rounded-md outline-none `}
+            } p-2 w-[180px] rounded-md outline-none `}
           />
         </form>
       </div>
 
       <div
         className={`md:hidden flex ml-auto cursor-pointer ${
-          pathname === "/" ? "text-white" : "text-black"
+          pathname === "/" || pathname === `/car_details/${id}`
+            ? "text-white"
+            : "text-black"
         } `}
         onClick={() => setOpen(!open)}
       >
@@ -168,7 +198,7 @@ export default function Navbar() {
           </button>
         </div>
 
-        <ul className="flex flex-col gap-3 text-lg  w-30">
+        <ul className="flex flex-col gap-3 text-lg  w-full">
           <NavLink
             to="/new_cars"
             end
@@ -189,7 +219,7 @@ export default function Navbar() {
 
           <a
             href="#aboutId"
-            className={`font-bold px-4 py-2 block transition-colors duration-300 `}
+            className={`font-bold px-4 py-2 block transition-colors duration-300 hover:text-yellow-400`}
             onClick={(e) => {
               setOpen(false), scrollToSectionById(e, "aboutId");
             }}
@@ -198,8 +228,8 @@ export default function Navbar() {
           </a>
 
           <a
-            href="#aboutId"
-            className={`font-bold px-4 py-2 block transition-colors duration-300 `}
+            href="#contactId"
+            className={`font-bold px-4 py-2 block transition-colors duration-300 hover:text-yellow-400`}
             onClick={(e) => {
               setOpen(false), scrollToSectionById(e, "contactId");
             }}

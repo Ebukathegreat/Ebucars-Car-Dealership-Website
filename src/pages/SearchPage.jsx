@@ -1,14 +1,68 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useCars } from "../customHooks/useCars";
 
 export default function SearchPage() {
-  const location = useLocation();
-  const params = new URLSearchParams(location.search).get("searchTerm");
-  const [searchedCar, setSearchedCar] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [errors, setErrors] = useState("");
-  const [notFound, setNotFound] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // READ directly from the URL. This is "live" on every render.
+  const searchTerm = searchParams.get("searchTerm") || "";
+  const page = parseInt(searchParams.get("page")) || 1;
+
+  // NEW: This state only updates when the user STOPS typing
+  const [debouncedTerm, setDebouncedTerm] = useState("");
+
+  const isFirstMount = useRef(true); // Refers to the component appearing for the first time
+
+  // This effect acts like a timer
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTerm(searchTerm);
+    }, 300); // Wait 300ms (0.3 seconds)
+
+    return () => clearTimeout(timer); // Clean up if user types another letter
+  }, [searchTerm]);
+
+  // UTILIZE THE HOOK HERE
+  // This one line replaces all your fetch logic, loading states, and error states
+  // NOW: We pass the debouncedTerm to the hook, NOT the raw searchTerm
+
+  const { cars, total, loading, error } = useCars({
+    searchTerm: debouncedTerm,
+    page: page,
+    limit: 10,
+    filters: {},
+  });
+
+  // Extract the total number from the string "0-9/15"
+  // We split by the "/" and take the second part
+  const totalCount = total ? parseInt(total.split("/")[1]) : 0;
+
+  // Calculate the max pages (assuming your limit is 10)
+  const limit = 10;
+  const totalPages = Math.ceil(totalCount / limit) || 1;
+
+  // ONLY turn framer motion off after the component has successfully rendered the LIST
+  useEffect(() => {
+    if (!loading && cars.length > 0) {
+      // Wait a tiny bit so Framer Motion can catch the "show" state
+      const timer = setTimeout(() => {
+        isFirstMount.current = false;
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, cars.length]);
+
+  useEffect(() => {
+    if (!loading) {
+      // A tiny timeout ensures the DOM has finished painting the car list
+      const timer = setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]); // Run this whenever loading status changes
 
   // SIMPLE Fade In
   const fadeIn = {
@@ -20,59 +74,8 @@ export default function SearchPage() {
     },
   };
 
-  useEffect(() => {
-    setLoading(true);
-    setNotFound(false);
-    setErrors("");
-    setSearchedCar([]); // clear old results immediately
-
-    const cachedSearchedCar = sessionStorage.getItem(
-      `cachedSearchedCar_${params}`
-    );
-
-    if (cachedSearchedCar) {
-      const parsed = JSON.parse(cachedSearchedCar);
-      console.log("CACHED SEARCHED CAR: ", parsed);
-      setSearchedCar(parsed);
-      setLoading(false);
-      return;
-    }
-    fetchSearchedCar();
-  }, [params]);
-
-  async function fetchSearchedCar() {
-    setLoading(true);
-    try {
-      const url = `https://ebucars-car-dealership-website.onrender.com/cars?search=${params}`;
-      const data = await fetch(url);
-
-      console.log("DATA: ", data);
-
-      if (!data.ok) {
-        // Non-200 response (like 404)
-        console.warn(`Server returned ${data.status}: ${data.statusText}`);
-        setSearchedCar([]); // treat as no results
-        setNotFound(true); // 👈 this is the key
-        return;
-      }
-
-      // 200 OK → parse JSON
-      const results = await data.json();
-      console.log("FETCHED RESULTS: ", results);
-      setSearchedCar(results);
-      sessionStorage.setItem(
-        `cachedSearchedCar_${params}`,
-        JSON.stringify(results)
-      );
-    } catch (err) {
-      console.error("ERROR: ", err);
-      setErrors(err.message || "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (loading) {
+  // 3. If it's the very first load and we have nothing, show the big spinner
+  if (loading && cars.length === 0)
     return (
       <div className="flex justify-center items-center min-h-screen ">
         <div>
@@ -84,68 +87,88 @@ export default function SearchPage() {
         </div>
       </div>
     );
-  }
 
-  if (errors)
+  // 4. If the server is actually DOWN (500 error, not a 404), show the red error
+  if (error && !loading) return <div className="text-red-500">{error}</div>;
+
+  // 5. If the search finished and returned 0 cars, show the "No cars found" message
+  if (!loading && debouncedTerm && cars.length === 0) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="bg-pink-50 text-pink-700 px-6 py-4 rounded-xl font-medium shadow-sm text-center max-w-md">
-          Oops! Something went wrong while loading your searched car. Don't
-          worry, please try again in a moment.
-        </p>
-      </div>
+      <p className="text-center  mt-6 font-semibold">
+        No cars found for: “{debouncedTerm}”. Try a different brand, model, or
+        keyword 🚗
+      </p>
     );
+  }
 
   return (
     <div>
-      {!loading && notFound ? (
-        <div className="text-center mt-10">
-          <p className="text-2xl font-semibold">No cars found for “{params}”</p>
-          <p className="text-gray-500 mt-2">
-            Try a different brand, model, or keyword 🚗
-          </p>
-        </div>
-      ) : (
-        <div>
-          <motion.section
-            variants={fadeIn}
-            initial="hidden"
-            animate="show"
-            viewport={{ once: true }}
-          >
-            {params && (
-              <h1 className="font-bold text-[27px] md:text-4xl text-center my-4">
-                Results for: "{params}"
-              </h1>
-            )}
+      <motion.section
+        variants={fadeIn}
+        initial="hidden"
+        animate="show"
+        viewport={{ once: true }}
+      >
+        {searchTerm && (
+          <h1 className="font-bold text-[27px] md:text-4xl text-center my-4">
+            Results for: "{debouncedTerm}"
+          </h1>
+        )}
 
-            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 my-4 px-5 ">
-              {searchedCar.map((srchdCr) => (
-                <li
-                  key={srchdCr.id}
-                  className="bg-[linear-gradient(rgba(79,62,124,0.95),rgba(31,29,48,0.95))] hover:bg-gray-900 hover:scale-105 transition rounded-2xl overflow-hidden p-2.5"
-                >
-                  <Link to={`/car_details/${srchdCr.id}`}>
-                    <img
-                      src={srchdCr.images[0]}
-                      alt={srchdCr.name}
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                    <div>
-                      <h3 className="font-bold text-white my-2 text-lg">
-                        {srchdCr.name}
-                      </h3>
-                      <p className="font-bold text-white text-lg">
-                        ${srchdCr.price.toLocaleString()}
-                      </p>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </motion.section>
+        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 my-4 px-5 pb-6 ">
+          {cars.map((srchdCr) => (
+            <li
+              key={srchdCr.id}
+              className="bg-[linear-gradient(rgba(79,62,124,0.95),rgba(31,29,48,0.95))] hover:bg-gray-900 hover:scale-105 transition rounded-2xl overflow-hidden p-2.5"
+            >
+              <Link to={`/car_details/${srchdCr.id}`}>
+                <img
+                  src={srchdCr.images[0]}
+                  alt={srchdCr.name}
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+                <div>
+                  <h3 className="font-bold text-white my-2 text-lg">
+                    {srchdCr.name}
+                  </h3>
+                  <p className="font-bold text-white text-lg">
+                    ${srchdCr.price.toLocaleString()}
+                  </p>
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        {/* PAGINATION CONTROLS */}
+        <div className="flex justify-center gap-4 pb-10">
+          <button
+            onClick={() => {
+              // Update the URL: keeps the search, changes the page
+              setSearchParams({ searchTerm, page: page - 1 });
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            disabled={page === 1}
+            className="px-4 py-2 bg-gray-400 rounded cursor-pointer hover:bg-green-400 disabled:hover:bg-gray-400 disabled:opacity-50 disabled:cursor-no-drop"
+          >
+            Previous
+          </button>
+          <span className="font-bold self-center">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => {
+              // Update the URL: keeps the search, changes the page
+              setSearchParams({ searchTerm, page: page + 1 });
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            disabled={page >= totalPages}
+            className="px-4 py-2 bg-gray-400 rounded cursor-pointer hover:bg-green-400 disabled:hover:bg-gray-400 disabled:opacity-50 disabled:cursor-no-drop"
+          >
+            Next
+          </button>
         </div>
-      )}
+      </motion.section>
     </div>
   );
 }

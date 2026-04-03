@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -14,7 +17,8 @@ import (
 // ----------------------
 // 1. Define the Car structure
 // ----------------------
-// This tells Go how a car object looks like
+// This is our "Blueprint." It tells Go exactly what fields a Car has
+// so it can translate the database data into something Go understands.
 type Car struct {
 	ID           int      `json:"id"`
 	Name         string   `json:"name"`
@@ -38,56 +42,102 @@ func main() {
 	// ----------------------
 	// 2. Load environment variables
 	// ----------------------
-	err := godotenv.Load(".env.local") // Load from .env.local file
+	// We look for the .env.local file to get our secret keys.
+	err := godotenv.Load(".env.local")
 	if err != nil {
 		log.Println(".env file not found, using system environment variables")
 	}
 
-	supabaseURL := os.Getenv("SUPABASE_URL")      // Supabase table endpoint
-	supabaseKey := os.Getenv("SUPABASE_ANON_KEY") // Supabase API key
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	supabaseKey := os.Getenv("SUPABASE_ANON_KEY")
 
+	// If the keys are missing, the app stops immediately (log.Fatal).
 	if supabaseURL == "" || supabaseKey == "" {
 		log.Fatal("Missing SUPABASE_URL or SUPABASE_ANON_KEY")
 	}
 
 	// ----------------------
-	// 3. Handler for fetching all cars or searching by name/brand
+	// 3. Handler for fetching all cars (Search, Filter, Paginate)
 	// ----------------------
 	http.HandleFunc("/cars", func(w http.ResponseWriter, r *http.Request) {
-		// Step 3a: Allow any website to call this API (CORS)
+		// Step 3a & 3b: Setup headers for CORS and JSON format
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-
-		// Step 3b: Tell the browser we are sending JSON
 		w.Header().Set("Content-Type", "application/json")
 
-		// Step 3c: Get the search term from the URL, e.g. /cars?search=Range+Rover
+		// Step 3c: Look at the URL to see what the user wants
 		search := r.URL.Query().Get("search")
+		condition := r.URL.Query().Get("condition") // NEW: Filters for New/Used
+		brandFilter := r.URL.Query().Get("brand")   // NEW: Filters for specific Brands
+		maxPrice := r.URL.Query().Get("maxPrice")
+		minPrice := r.URL.Query().Get("minPrice")
+		pageStr := r.URL.Query().Get("page")
+		limitStr := r.URL.Query().Get("limit")
 
-		client := &http.Client{} // Step 3d: Create a client to send request to Supabase
+		// Step 3c-i: Set default numbers for pagination
+		limit := 10
+		page := 1
 
-		// Step 3e: Start building the URL to fetch all cars
-		url := supabaseURL + "?select=*"
-
-		// Step 3f: If a search term is provided, filter the results
-		if search != "" {
-			// Replace spaces with % for Supabase pattern matching
-			searchParam := strings.ReplaceAll(search, " ", "%")
-
-			// Filter cars where name OR brand contains the search term (case-insensitive)
-			url += fmt.Sprintf("&or=(name.ilike.*%s*,brand.ilike.*%s*)", searchParam, searchParam)
+		// Convert URL text strings into whole numbers (integers)
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+		}
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
 		}
 
-		// Step 3g: Create a GET request to Supabase
-		req, err := http.NewRequest("GET", url, nil)
+		// Step 3c-ii: Calculate how many cars to skip to get to the right page
+		offset := (page - 1) * limit
+
+		client := &http.Client{}
+
+		// Step 3e: Start building the "Ask" for Supabase
+		targetUrl := supabaseURL + "?select=*"
+
+		// Step 3f: Add Filters to the URL if the user provided them
+		if search != "" {
+			searchParam := strings.ReplaceAll(search, " ", "%")
+			targetUrl += fmt.Sprintf("&or=(name.ilike.*%s*,brand.ilike.*%s*)", searchParam, searchParam)
+		}
+
+		// Filter for Condition (New/Used)
+		if condition != "" {
+			targetUrl += fmt.Sprintf("&condition=eq.%s", condition)
+		}
+
+		// Filter for Brand (Toyota/Ford/etc.)
+		if brandFilter != "" {
+		// This turns "land rover" into "land+rover" or "land%20rover"
+		// which Supabase understands perfectly.
+		safeBrand := url.QueryEscape(brandFilter)
+		targetUrl += fmt.Sprintf("&brand=ilike.%s", safeBrand)
+		}
+
+		//  If the user provided a price limit, add it to the Supabase URL
+		if maxPrice != "" {
+		targetUrl += fmt.Sprintf("&price=lt.%s", maxPrice)		
+		}
+
+		if minPrice != "" {
+		targetUrl += fmt.Sprintf("&price=gte.%s", minPrice)		
+		}
+
+
+
+		// Step 3f-i: Add the Pagination "cuts" to the URL
+		targetUrl += fmt.Sprintf("&limit=%d&offset=%d", limit, offset)
+
+		// Step 3g: Create the actual request package
+		req, err := http.NewRequest("GET", targetUrl, nil)
 		if err != nil {
 			http.Error(w, "Failed to create request", http.StatusInternalServerError)
 			return
 		}
 
-		// Step 3h: Add headers so Supabase knows we are allowed to fetch the data
+		// Step 3h: Add security keys to the request
 		req.Header.Set("apikey", supabaseKey)
 		req.Header.Set("Authorization", "Bearer "+supabaseKey)
 		req.Header.Set("Accept", "application/json")
+		req.Header.Set("Prefer", "count=exact") // Ask Supabase for the total count
 
 		// Step 3i: Send the request to Supabase
 		resp, err := client.Do(req)
@@ -95,7 +145,10 @@ func main() {
 			http.Error(w, "Failed to fetch from Supabase", http.StatusInternalServerError)
 			return
 		}
-		defer resp.Body.Close() // Step 3j: Make sure to close the response when done
+		defer resp.Body.Close()
+
+		// NEW STEP 3j-i: Grab the total count from the Supabase header
+		totalCount := resp.Header.Get("Content-Range")
 
 		// Step 3k: Read the JSON response and convert it into a slice of cars
 		var cars []Car
@@ -104,99 +157,104 @@ func main() {
 			return
 		}
 
-		//Step 3l: If no car was found, return a 404 error
+		// Step 3l: Error if no cars were found
 		if len(cars) == 0 {
 			http.Error(w, "Car not found", http.StatusNotFound)
 			return
 		}
 
-		// Step 3m: Send the cars back to the browser as JSON
-		json.NewEncoder(w).Encode(cars)
+		// Step 3m: Move exact name matches to the top of the list
+		if search != "" {
+			s := strings.ToLower(search)
+			sort.Slice(cars, func(i, j int) bool {
+				iMatch := strings.HasPrefix(strings.ToLower(cars[i].Name), s) || strings.HasPrefix(strings.ToLower(cars[i].Brand), s)
+				jMatch := strings.HasPrefix(strings.ToLower(cars[j].Name), s) || strings.HasPrefix(strings.ToLower(cars[j].Brand), s)
+				return iMatch && !jMatch
+			})
+		}
+
+		// Step 3n: Wrap everything in a final "package" for React
+		response := map[string]interface{}{
+			"cars":        cars,
+			"total":       totalCount,
+			"currentPage": page,
+		}
+
+		// Step 3o: Send the final package back to the user
+		json.NewEncoder(w).Encode(response)
 	})
-
-
-
 
 	// ----------------------
 	// 4. Handler for fetching a single car by its ID
 	// ----------------------
 	http.HandleFunc("/cars/", func(w http.ResponseWriter, r *http.Request) {
-		// Step 4a: Allow any website to call this API
+		// Step 4a & 4b: Basic setup
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-
-		// Step 4b: Tell the browser we are sending JSON
 		w.Header().Set("Content-Type", "application/json")
 
-		// Step 4c: Get the car ID from the URL
-		// Example: /cars/3 → id = "3"
+		// Step 4c: Extract the ID from the end of the URL (e.g., /cars/5)
 		id := strings.TrimPrefix(r.URL.Path, "/cars/")
-
-		// Step 4d: If no ID is provided, return an error
 		if id == "" {
 			http.Error(w, "Car ID is required", http.StatusBadRequest)
 			return
 		}
 
-		client := &http.Client{} // Step 4e: Create a client to send request to Supabase
-
-		// Step 4f: Build the URL to fetch this specific car by ID
+		// Step 4e: Create the request to Supabase asking for 1 specific ID
+		client := &http.Client{}
 		req, err := http.NewRequest("GET", supabaseURL+"?id=eq."+id, nil)
 		if err != nil {
 			http.Error(w, "Failed to create request", http.StatusInternalServerError)
 			return
 		}
 
-		// Step 4g: Add headers so Supabase knows we are allowed to fetch the data
+		// Step 4g: Security headers
 		req.Header.Set("apikey", supabaseKey)
 		req.Header.Set("Authorization", "Bearer "+supabaseKey)
 		req.Header.Set("Accept", "application/json")
 
-		// Step 4h: Send the request to Supabase
+		// Step 4h & 4i: Send and then prepare to close
 		resp, err := client.Do(req)
 		if err != nil {
 			http.Error(w, "Failed to fetch car", http.StatusInternalServerError)
 			return
 		}
-		defer resp.Body.Close() // Step 4i: Close the response when done
+		defer resp.Body.Close()
 
-		// Step 4j: Read the JSON response and convert it into a slice of cars
+		// Step 4j: Decode the result
 		var cars []Car
 		if err := json.NewDecoder(resp.Body).Decode(&cars); err != nil {
 			http.Error(w, "Failed to decode car", http.StatusInternalServerError)
 			return
 		}
 
-		// Step 4k: If no car was found, return a 404 error
+		// Step 4k: Handle "Not Found"
 		if len(cars) == 0 {
 			http.Error(w, "Car not found", http.StatusNotFound)
 			return
 		}
 
-		// Step 4l: Send the first car in the response as JSON
+		// Step 4l: Send only the single car (the first item in the list)
 		json.NewEncoder(w).Encode(cars[0])
 	})
 
-
-	//	Wake Up Go Backend On Render Website
-		http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	// ----------------------
+	// 5. Health Check (Keeps the server awake on hosting sites like Render)
+	// ----------------------
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
 
-
-	
-
-
 	// ----------------------
-	// 5. Start the server
+	// 6. Start the server
 	// ----------------------
-	port := os.Getenv("PORT") // Step 5a: Get port from environment
+	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080" // Step 5b: Use 8080 if no port is set
+		port = "8080" // Use 8080 if no specific port is provided
 	}
 
-	log.Println("Server running on port", port) // Step 5c: Log server start
-	err = http.ListenAndServe(":"+port, nil)   // Step 5d: Start listening for requests
+	log.Println("Server running on port", port)
+	err = http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		log.Fatal("Failed to start server:", err)
 	}

@@ -1,15 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "./below50000.module.css";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { useCars } from "../customHooks/useCars";
 
 export default function Below_50000() {
   // --- STATE MANAGEMENT ---
-  const [allCars, setAllCars] = useState([]); // All cars from API
-  const [displayCars, setDisplayCars] = useState([]); // The specific cars we see on screen
-  const [showLogos, setShowLogos] = useState(true); // Toggle for the brand logo grid
+
   const [activeTab, setActiveTab] = useState("brd"); // Tracks which button has the red line
-  const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState("");
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = parseInt(searchParams.get("page")) || 1;
+  const currentBrand = searchParams.get("brand") || "";
+
+  const currentView = searchParams.get("view") || "";
+  const showLogos = currentView !== "all" && !currentBrand; // Toggle for the brand logo grid
 
   const carBrands = [
     ["land rover", "/Land Rover Logo 2.jpg"],
@@ -23,6 +28,39 @@ export default function Below_50000() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);*/
 
+  // --- DERIVED DATA ---
+
+  const filters = useMemo(
+    () => ({ maxPrice: 50000, brand: currentBrand }),
+    [currentBrand]
+  );
+
+  const { cars, total, loading, error } = useCars({
+    searchTerm: "",
+    page: page,
+    limit: 3,
+    filters: filters,
+  });
+
+  if (!currentBrand) {
+    console.log("ALL CARS BELOW: ", cars);
+  } else {
+    console.log("SPECIFIC BRAND: ", cars);
+  }
+
+  // Extract the total number from the string "0-9/15"
+  // We split by the "/" and take the second part
+
+  const totalCount = total ? parseInt(total.split("/")[1]) : 0;
+
+  console.log("COUNT:", totalCount);
+
+  // Calculate the max pages (assuming your limit is 10)
+  const limit = 3;
+  const totalPages = Math.ceil(totalCount / limit) || 1;
+
+  console.log("TOTAL PAGES:", totalPages);
+
   // 1. Add this new Effect
   useEffect(() => {
     if (!loading) {
@@ -35,59 +73,26 @@ export default function Below_50000() {
     }
   }, [loading]); // Only runs when loading changes
 
-  // 2. Load data from Cache or API
-  useEffect(() => {
-    const cachedResults = sessionStorage.getItem("cachedResults");
-    if (cachedResults) {
-      setAllCars(JSON.parse(cachedResults));
-      setLoading(false);
-    } else {
-      fetchAllCars();
-    }
-  }, []);
-
-  async function fetchAllCars() {
-    try {
-      const res = await fetch(
-        "https://ebucars-car-dealership-website.onrender.com/cars"
-      );
-      const data = await res.json();
-      setAllCars(data);
-      sessionStorage.setItem("cachedResults", JSON.stringify(data));
-    } catch (err) {
-      setErrors("Failed to load cars");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // --- DERIVED DATA ---
-  // We calculate this on every render so we always have the cheap cars ready
-  const carsBelow50000 = allCars.filter((car) => Number(car.price) < 50000);
-
   // --- INTERACTION LOGIC ---
 
-  // User clicks "By Brands" button
+  // User clicks "By Brands" button or "Go back to brands" button
   function handleShowBrandsTab() {
     setActiveTab("brd");
-    setShowLogos(true); // Show the logos again
-    setDisplayCars([]); // Clear any car lists currently showing
+    setSearchParams({});
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 500);
   }
 
   // User clicks "All" button
   function handleShowAllBelow50000() {
     setActiveTab("all");
-    setShowLogos(false); // Hide logos
-    setDisplayCars(carsBelow50000); // Show every car under 50k
+    setSearchParams({ brand: "", page: 1, view: "all" });
   }
 
   // User clicks a specific Logo
   function handleBrandClick(brandName) {
-    const filtered = carsBelow50000.filter(
-      (car) => car.brand.toLowerCase() === brandName.toLowerCase()
-    );
-    setDisplayCars(filtered); // Update display list with brand-specific cars
-    setShowLogos(false); // Hide the logos to make room for cars
+    setSearchParams({ brand: brandName.toLowerCase(), page: 1 });
   }
 
   if (loading) {
@@ -147,7 +152,7 @@ export default function Below_50000() {
         </div>
       </section>
 
-      <section className="mt-10">
+      <section className="mt-6">
         {/* VIEW 1: Brand Logos (Shows only when showLogos is true) */}
         {showLogos && (
           <ul className="grid grid-cols-2 sm:grid-cols-4 gap-5 px-10">
@@ -174,48 +179,92 @@ export default function Below_50000() {
           </ul>
         )}
 
-        {/* VIEW 2: Car List (Shows whenever displayCars has items) */}
-        {!showLogos && displayCars.length > 0 && (
-          <div>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 px-5 pb-10">
-              {displayCars.map((car) => (
-                <li
-                  key={car.id}
-                  className=" bg-[linear-gradient(rgba(79,62,124,0.95),rgba(31,29,48,0.95))] hover:bg-gray-900  shadow-md hover:shadow-xl hover:scale-105 transition rounded-2xl overflow-hidden p-3 "
-                >
-                  <Link to={`/car_details/${car.id}`}>
-                    <img
-                      src={car.images[0]}
-                      alt={car.name}
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                    <div className="mt-3">
-                      <h3 className="font-bold text-lg text-white">
-                        {car.name}
-                      </h3>
-                      <p className="text-white font-semibold text-lg ">
-                        ${car.price.toLocaleString()}
-                      </p>
-                      <p className="text-sm text-white">
-                        {car.brand} • {car.year}
-                      </p>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+        {/* VIEW 2: Car List (Shows whenever cars has items) */}
+        {!showLogos &&
+          cars.length > 0 &&
+          (currentView === "all" ||
+            cars[0].brand.toLowerCase() === currentBrand.toLowerCase()) && (
+            <div>
+              <p className="text-center font-bold text-2xl mb-4">
+                {searchParams.get("brand").toUpperCase()}
+              </p>
 
-            <button
-              onClick={handleShowBrandsTab}
-              className="text-blue-600 underline pl-5 mb-2 cursor-pointer"
-            >
-              Go back to brands
-            </button>
-          </div>
-        )}
+              <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 px-5 pb-10">
+                {cars.map((car) => (
+                  <li
+                    key={car.id}
+                    className=" bg-[linear-gradient(rgba(79,62,124,0.95),rgba(31,29,48,0.95))] hover:bg-gray-900  shadow-md hover:shadow-xl hover:scale-105 transition rounded-2xl overflow-hidden p-3 "
+                  >
+                    <Link to={`/car_details/${car.id}`}>
+                      <img
+                        src={car.images[0]}
+                        alt={car.name}
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                      <div className="mt-3">
+                        <h3 className="font-bold text-lg text-white">
+                          {car.name}
+                        </h3>
+                        <p className="text-white font-semibold text-lg ">
+                          ${car.price.toLocaleString()}
+                        </p>
+                        <p className="text-sm text-white">
+                          {car.brand} • {car.year}
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+
+              {/* PAGINATION CONTROLS */}
+              <div className="flex justify-center gap-4 pb-10">
+                <button
+                  onClick={() => {
+                    // Update the URL: keeps the search, changes the page
+                    setSearchParams({
+                      view: currentView,
+                      brand: currentBrand,
+                      page: page - 1,
+                    });
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  disabled={page === 1}
+                  className="px-4 py-2 bg-gray-400 rounded cursor-pointer hover:bg-green-400 disabled:hover:bg-gray-400 disabled:opacity-50 disabled:cursor-no-drop"
+                >
+                  Previous
+                </button>
+                <span className="font-bold self-center">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={() => {
+                    // Update the URL: keeps the search, changes the page
+                    setSearchParams({
+                      view: currentView,
+                      brand: currentBrand,
+                      page: page + 1,
+                    });
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  disabled={page >= totalPages}
+                  className="px-4 py-2 bg-gray-400 rounded cursor-pointer hover:bg-green-400 disabled:hover:bg-gray-400 disabled:opacity-50 disabled:cursor-no-drop"
+                >
+                  Next
+                </button>
+              </div>
+
+              <button
+                onClick={handleShowBrandsTab}
+                className="text-blue-600 underline pl-5 mb-2 cursor-pointer"
+              >
+                Go back to brands
+              </button>
+            </div>
+          )}
 
         {/* VIEW 3: Empty State (If a brand has no cars under 50k) */}
-        {!showLogos && displayCars.length === 0 && (
+        {!showLogos && cars.length === 0 && (
           <div className="text-center py-20">
             <p className="text-black text-xl">
               No cars found in this category.

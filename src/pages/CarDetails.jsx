@@ -72,25 +72,25 @@ export default function CarDetails() {
     return (
       <div className="flex justify-center items-center h-screen">
         <p className="bg-blue-50 text-blue-700 px-6 py-4 rounded-xl font-medium shadow-sm text-center max-w-md">
-          Hmm… we couldn’t find the car you’re looking for. Try checking another
+          Hmm… we couldn't find the car you're looking for. Try checking another
           listing!
         </p>
       </div>
     );
 
   return (
-    <div className="h-auto sm:h-screen  p-6 bg-[linear-gradient(rgba(79,62,124,0.95),rgba(31,29,48,0.95))]">
+    <div className=" min-h-screen  px-6 py-2 bg-[linear-gradient(rgba(79,62,124,0.95),rgba(31,29,48,0.95))]">
       <ul>
         <li
           key={carDetails.id}
-          className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-start bg-white shadow-lg rounded-xl overflow-hidden"
+          className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start bg-white shadow-lg rounded-xl overflow-hidden"
         >
           {/* Left: Car Image */}
           <div className="w-full">
             <img
               src={carDetails?.images?.[0]}
               alt={carDetails.name}
-              className="  bg-amber-400 sm:h-[92vh] object-contain sm:object-cover rounded-lg"
+              className="   w-full h-[92vh]   rounded-lg"
             />
           </div>
 
@@ -100,10 +100,10 @@ export default function CarDetails() {
               <h1 className="text-4xl font-bold text-gray-900 mb-2">
                 {carDetails.name}
               </h1>
-              <h2 className="text-lg text-gray-700 mb-4">
+              <h2 className="text-lg text-gray-700 mb-2">
                 {carDetails.description}
               </h2>
-              <p className="text-xl font-semibold text-gray-800">
+              <p className="text-xl font-semibold text-gray-800 mb-3">
                 ${carDetails.price.toLocaleString()}
               </p>
               <p className="text-md text-gray-600">
