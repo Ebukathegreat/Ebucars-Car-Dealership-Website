@@ -8,7 +8,7 @@ export default function Home() {
   const [errors, setErrors] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const ref = useRef(false);
+  //const ref = useRef(false);
 
   // SIMPLE slide-in from the right
   const slideFromRight = {
@@ -23,8 +23,8 @@ export default function Home() {
   useEffect(() => {
     const cachedResults = sessionStorage.getItem("cachedResults");
 
-    if (ref.current === cachedResults) return;
-    ref.current = cachedResults;
+    /* if (ref.current === cachedResults) return;
+    ref.current = cachedResults; */
 
     if (cachedResults) {
       setAllCars(JSON.parse(cachedResults));
