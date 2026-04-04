@@ -37,8 +37,12 @@ export default function Home() {
 
   async function fetchAllCars() {
     try {
-      const res = await fetch("https://onrender.com");
+      const res = await fetch(
+        "https://ebucars-car-dealership-website.onrender.com/cars?limit=15"
+      );
       const data = await res.json();
+
+      console.log("DATA", data.cars);
 
       // LOOK HERE: We need to access data.cars because that is the actual array
       if (data && Array.isArray(data.cars)) {
@@ -58,9 +62,13 @@ export default function Home() {
   const newCars = Array.isArray(allCars)
     ? allCars.filter((car) => car.condition === "New")
     : [];
+  console.log("THESE ARE NEW CARS", newCars);
+
   const usedCars = Array.isArray(allCars)
     ? allCars.filter((car) => car.condition === "Used")
     : [];
+
+  console.log("THESE ARE USED CARS", usedCars);
 
   return (
     <div className=" w-[100vw] overflow-x-hidden">

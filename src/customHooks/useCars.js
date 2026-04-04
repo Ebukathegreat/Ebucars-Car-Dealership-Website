@@ -45,7 +45,7 @@ export function useCars({ searchTerm, page = 1, limit = 10, filters = {} }) {
 
       try {
         // Build the base Go Backend URL
-        let url = `http://localhost:8080/cars?search=${searchTerm}&page=${page}&limit=${limit}`;
+        let url = `https://ebucars-car-dealership-website.onrender.com/cars?search=${searchTerm}&page=${page}&limit=${limit}`;
 
         // Append filters only if they actually exist
         if (filters?.condition) {
