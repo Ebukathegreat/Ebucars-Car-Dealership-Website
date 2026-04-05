@@ -77,8 +77,10 @@ export default function Navbar() {
       <Link
         to="/"
         className={` ${
-          pathname !== "/" ? "text-slate-900" : "text-[gold]"
-        }   text-shadow-[1px_1px_2px_rgba(0,0,0,0.5)] font-extrabold text-2xl`}
+          pathname !== "/" && pathname !== `/car_details/${id}`
+            ? "text-slate-800"
+            : "text-[gold]"
+        }   text-shadow-[1px_1px_2px_rgba(0,0,0,0.2)] font-extrabold text-2xl`}
       >
         Ebucars
       </Link>

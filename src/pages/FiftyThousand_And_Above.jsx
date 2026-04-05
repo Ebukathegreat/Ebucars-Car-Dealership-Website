@@ -79,7 +79,7 @@ export default function FiftyThousand_And_Above() {
   // User clicks "All" button
   function handleShowAll_OnAndAbove50000() {
     setActiveTab("all");
-    setSearchParams({ view: "all" });
+    setSearchParams({ brand: "", page: 1, view: "all" });
   }
 
   // User clicks a specific Logo
