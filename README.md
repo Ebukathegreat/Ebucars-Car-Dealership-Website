@@ -12,17 +12,19 @@ By integrating **Supabase** for real-time database needs and **Golang** for serv
 
 - 🏎️ **Vehicle Discovery**: Browse a wide range of cars with high-quality imagery and detailed specs.
 - 🔍 **Advanced Filtering**: Search by make, model, price, and category to find exactly what you need.
+- ✨ **Smooth Animations**: Powered by **Framer Motion** for fluid page transitions, hover effects, and interactive UI elements.
 - ⚡ **High-Performance Backend**: Powered by **Golang** for fast API responses and efficient data handling.
 - 🛠️ **Dynamic Management**: Backend endpoints for listing updates and health monitoring.
 - 📱 **Fully Responsive**: Optimized for desktop, tablet, and mobile using a mobile-first design approach.
 - 🎨 **Modern UI**: Styled with **Tailwind CSS** for a clean, premium automotive aesthetic.
-- ✨ **Rich Iconography**: Enhanced visual cues using **Font Awesome** and **React Icons**.
+- 🌐 **Rich Iconography**: Enhanced visual cues using **Font Awesome** and **React Icons**.
 
 ---
 
 ## 🛠️ Tech Stack
 
 - **Frontend Framework:** React (Vite)
+- **Animations:** Framer Motion
 - **Styling:** Tailwind CSS
 - **Backend:** Golang (API & Server Logic)
 - **Database:** Supabase
@@ -40,9 +42,7 @@ By integrating **Supabase** for real-time database needs and **Golang** for serv
 
 ## 🌍 Live Demo
 
-👉 [https://ebucars.netlify.app]
-
----
+## 👉 [https://ebucars.netlify.app]
 
 ## 👤 Author
 
