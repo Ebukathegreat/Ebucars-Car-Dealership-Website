@@ -34,7 +34,7 @@ By integrating **Supabase** for real-time database needs and **Golang** for serv
 
 ## 📸 Screenshots
 
-![Ebucars Homepage Screenshot](public/Ebucars Website Home Page Screenshot.png)
+![Ebucars Homepage Screenshot](public/Ebucars_Website_Home_Page_Screenshot.png)
 
 ---
 
