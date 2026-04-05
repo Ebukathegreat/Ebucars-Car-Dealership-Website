@@ -36,7 +36,7 @@ By integrating **Supabase** for real-time database needs and **Golang** for serv
 ---
 
 ## 🌍 Live Demo
-👉 [ebucars.netlify.app]
+👉 [https://ebucars.netlify.app]
 
 ---
 
