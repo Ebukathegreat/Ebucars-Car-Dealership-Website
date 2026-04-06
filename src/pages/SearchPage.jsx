@@ -94,8 +94,13 @@ export default function SearchPage() {
   if (error && !loading)
     return <div className="text-red-500 text-center mt-2 mb-5">{error}</div>;
 
+  if (debouncedTerm === "") {
+    console.log("YESSSSSSS EMPTY");
+  }
+  const noMatch = searchTerm !== debouncedTerm;
+
   // 5. If the search finished and returned 0 cars, show the "No cars found" message
-  if (!loading && debouncedTerm && cars.length === 0) {
+  if (!loading && !noMatch && cars.length === 0) {
     return (
       <p className="text-center  my-12 font-semibold">
         No cars found for: “{debouncedTerm}”. Try a different brand, model, or
