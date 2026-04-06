@@ -29,6 +29,7 @@ export default function Home() {
     if (cachedResults) {
       setAllCars(JSON.parse(cachedResults));
       setLoading(false);
+      console.log("HOME PAGE CACHED RESULTS", JSON.parse(cachedResults));
       return;
     }
 

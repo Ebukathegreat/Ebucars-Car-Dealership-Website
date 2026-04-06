@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 /**
  * useCars Hook
@@ -10,8 +11,26 @@ export function useCars({ searchTerm, page = 1, limit = 10, filters = {} }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const location = useLocation();
+  const pathname = location.pathname;
+
   useEffect(() => {
     // -------------------------------------------------------------------------
+
+    const API_BASE_URL =
+      window.location.hostname === "localhost"
+        ? "http://localhost:8080"
+        : "https://ebucars-car-dealership-website.onrender.com";
+
+    if (pathname === "/search_page") {
+      if (searchTerm === "" || searchTerm === undefined) {
+        setCars([]);
+        setTotal(0);
+        setLoading(false);
+        return;
+      }
+    }
+
     setLoading(true);
     setCars([]); // Clear old cars so the user doesn't see "ghost" data
 
@@ -45,7 +64,7 @@ export function useCars({ searchTerm, page = 1, limit = 10, filters = {} }) {
 
       try {
         // Build the base Go Backend URL
-        let url = `https://ebucars-car-dealership-website.onrender.com/cars?search=${searchTerm}&page=${page}&limit=${limit}`;
+        let url = `${API_BASE_URL}/cars?search=${searchTerm}&page=${page}&limit=${limit}`;
 
         // Append filters only if they actually exist
         if (filters?.condition) {
@@ -74,7 +93,7 @@ export function useCars({ searchTerm, page = 1, limit = 10, filters = {} }) {
           return;
         }
 
-        if (!res.ok) throw new Error("Server error - could not fetch cars");
+        if (!res.ok) throw new Error("Server error. Could not fetch cars");
 
         const data = await res.json();
 

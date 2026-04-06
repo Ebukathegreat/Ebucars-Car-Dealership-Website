@@ -22,7 +22,10 @@ export const router = createBrowserRouter([
       { path: "car_details/:id", element: <CarDetails /> },
       { path: "/new_cars", element: <NewCars /> },
       { path: "/used_cars", element: <UsedCars /> },
-      { path: "/search_page", element: <SearchPage /> },
+      {
+        path: "/search_page",
+        element: <SearchPage />,
+      },
       { path: "/brands/:brand", element: <Brands /> },
       { path: "/all_cars", element: <AllCars /> },
       { path: "/below_50000", element: <Below_50000 /> },

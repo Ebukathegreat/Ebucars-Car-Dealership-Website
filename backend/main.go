@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -93,10 +95,13 @@ func main() {
 		// Step 3e: Start building the "Ask" for Supabase
 		targetUrl := supabaseURL + "?select=*"
 
-		// Step 3f: Add Filters to the URL if the user provided them
+
+		// Filter for Search (Name/Brand)
 		if search != "" {
-			searchParam := strings.ReplaceAll(search, " ", "%")
-			targetUrl += fmt.Sprintf("&or=(name.ilike.*%s*,brand.ilike.*%s*)", searchParam, searchParam)
+			// We use * for wildcards and url.QueryEscape the whole filter group
+			// This handles the space in "Land Rover" correctly for Supabase
+			filter := fmt.Sprintf("(name.ilike.*%s*,brand.ilike.*%s*)", search, search)
+			targetUrl += "&or=" + url.QueryEscape(filter)
 		}
 
 		// Filter for Condition (New/Used)
@@ -109,7 +114,7 @@ func main() {
 		// This turns "land rover" into "land+rover" or "land%20rover"
 		// which Supabase understands perfectly.
 		safeBrand := url.QueryEscape(brandFilter)
-		targetUrl += fmt.Sprintf("&brand=ilike.%s", safeBrand)
+		targetUrl += fmt.Sprintf("&brand=ilike.*%s*", safeBrand)
 		}
 
 		//  If the user provided a price limit, add it to the Supabase URL
@@ -149,6 +154,21 @@ func main() {
 
 		// NEW STEP 3j-i: Grab the total count from the Supabase header
 		totalCount := resp.Header.Get("Content-Range")
+
+
+		
+		// --- ADD THIS ERROR LOGGING BLOCK ---
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("SUPABASE ERROR (Status %d): %s", resp.StatusCode, string(bodyBytes))
+		} else {
+			log.Printf("SUPABASE SUCCESS: %s", string(bodyBytes))
+		}
+		// This line is CRITICAL: it puts the data back into the body so you can decode it later
+		resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) 
+		// ------------------------------------
+
+
 
 		// Step 3k: Read the JSON response and convert it into a slice of cars
 		var cars []Car
@@ -258,4 +278,4 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
-}
+} 

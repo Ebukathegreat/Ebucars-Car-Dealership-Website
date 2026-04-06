@@ -35,6 +35,8 @@ export default function SearchPage() {
     filters: {},
   });
 
+  console.log("VERIFICATION:", cars);
+
   // Extract the total number from the string "0-9/15"
   // We split by the "/" and take the second part
   const totalCount = total ? parseInt(total.split("/")[1]) : 0;
@@ -89,12 +91,13 @@ export default function SearchPage() {
     );
 
   // 4. If the server is actually DOWN (500 error, not a 404), show the red error
-  if (error && !loading) return <div className="text-red-500">{error}</div>;
+  if (error && !loading)
+    return <div className="text-red-500 text-center mt-2 mb-5">{error}</div>;
 
   // 5. If the search finished and returned 0 cars, show the "No cars found" message
   if (!loading && debouncedTerm && cars.length === 0) {
     return (
-      <p className="text-center  mt-6 font-semibold">
+      <p className="text-center  my-12 font-semibold">
         No cars found for: “{debouncedTerm}”. Try a different brand, model, or
         keyword 🚗
       </p>
@@ -103,72 +106,74 @@ export default function SearchPage() {
 
   return (
     <div>
-      <motion.section
-        variants={fadeIn}
-        initial="hidden"
-        animate="show"
-        viewport={{ once: true }}
-      >
-        {searchTerm && (
-          <h1 className="font-bold text-[27px] md:text-4xl text-center my-4">
-            Results for: "{debouncedTerm}"
-          </h1>
-        )}
+      {!loading && cars.length > 0 && (
+        <motion.section
+          variants={fadeIn}
+          initial="hidden"
+          animate="show"
+          viewport={{ once: true }}
+        >
+          {debouncedTerm && (
+            <h1 className="font-bold text-[27px] md:text-4xl text-center my-4">
+              Results for: "{debouncedTerm}"
+            </h1>
+          )}
 
-        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 my-4 px-5 pb-6 ">
-          {cars.map((srchdCr) => (
-            <li
-              key={srchdCr.id}
-              className="bg-[linear-gradient(rgba(79,62,124,0.95),rgba(31,29,48,0.95))] hover:bg-gray-900 hover:scale-105 transition rounded-2xl overflow-hidden p-2.5"
+          <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 my-4 px-5 pb-6 ">
+            {cars.map((srchdCr) => (
+              <li
+                key={srchdCr.id}
+                className="bg-[linear-gradient(rgba(79,62,124,0.95),rgba(31,29,48,0.95))] hover:bg-gray-900 hover:scale-105 transition rounded-2xl overflow-hidden p-2.5"
+              >
+                <Link to={`/car_details/${srchdCr.id}`}>
+                  <img
+                    src={srchdCr.images[0]}
+                    alt={srchdCr.name}
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  <div>
+                    <h3 className="font-bold text-white my-2 text-lg">
+                      {srchdCr.name}
+                    </h3>
+                    <p className="font-bold text-white text-lg">
+                      ${srchdCr.price.toLocaleString()}
+                    </p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {/* PAGINATION CONTROLS */}
+          <div className="flex justify-center gap-4 pb-10">
+            <button
+              onClick={() => {
+                // Update the URL: keeps the search, changes the page
+                setSearchParams({ searchTerm, page: page - 1 });
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              disabled={page === 1}
+              className="px-4 py-2 bg-gray-400 rounded cursor-pointer hover:bg-green-400 disabled:hover:bg-gray-400 disabled:opacity-50 disabled:cursor-no-drop"
             >
-              <Link to={`/car_details/${srchdCr.id}`}>
-                <img
-                  src={srchdCr.images[0]}
-                  alt={srchdCr.name}
-                  className="w-full h-48 object-cover rounded-lg"
-                />
-                <div>
-                  <h3 className="font-bold text-white my-2 text-lg">
-                    {srchdCr.name}
-                  </h3>
-                  <p className="font-bold text-white text-lg">
-                    ${srchdCr.price.toLocaleString()}
-                  </p>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        {/* PAGINATION CONTROLS */}
-        <div className="flex justify-center gap-4 pb-10">
-          <button
-            onClick={() => {
-              // Update the URL: keeps the search, changes the page
-              setSearchParams({ searchTerm, page: page - 1 });
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            disabled={page === 1}
-            className="px-4 py-2 bg-gray-400 rounded cursor-pointer hover:bg-green-400 disabled:hover:bg-gray-400 disabled:opacity-50 disabled:cursor-no-drop"
-          >
-            Previous
-          </button>
-          <span className="font-bold self-center">
-            Page {page} of {totalPages}
-          </span>
-          <button
-            onClick={() => {
-              // Update the URL: keeps the search, changes the page
-              setSearchParams({ searchTerm, page: page + 1 });
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            disabled={page >= totalPages}
-            className="px-4 py-2 bg-gray-400 rounded cursor-pointer hover:bg-green-400 disabled:hover:bg-gray-400 disabled:opacity-50 disabled:cursor-no-drop"
-          >
-            Next
-          </button>
-        </div>
-      </motion.section>
+              Previous
+            </button>
+            <span className="font-bold self-center">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => {
+                // Update the URL: keeps the search, changes the page
+                setSearchParams({ searchTerm, page: page + 1 });
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              disabled={page >= totalPages}
+              className="px-4 py-2 bg-gray-400 rounded cursor-pointer hover:bg-green-400 disabled:hover:bg-gray-400 disabled:opacity-50 disabled:cursor-no-drop"
+            >
+              Next
+            </button>
+          </div>
+        </motion.section>
+      )}
     </div>
   );
 }
