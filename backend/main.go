@@ -63,8 +63,33 @@ func main() {
 	// ----------------------
 	http.HandleFunc("/cars", func(w http.ResponseWriter, r *http.Request) {
 		// Step 3a & 3b: Setup headers for CORS and JSON format
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		// Allow our frontend to talk to this backend
+		// You can allow localhost for local testing or use your app's url
+		origin := r.Header.Get("Origin")
+
+		// Dynamically reflect allowed origins back to the browser
+		if origin == "http://localhost:5173" || origin == "https://ebucars.netlify.app" {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+		} else {
+			// 👇 FIX: If origin is empty/missing, default to production so CORS never vanishes
+			w.Header().Set("Access-Control-Allow-Origin", "https://ebucars.netlify.app")
+		}
+
+		// Tell the browser which methods are allowed (POST for delete, OPTIONS for preflight)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+
+		// Tell the browser which headers are allowed (we need Content-Type and Authorization)
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
 		w.Header().Set("Content-Type", "application/json")
+
+		// Handle the "Preflight" OPTIONS request
+		// The browser needs a 200 OK for this WITHOUT hitting your logic below
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 
 		// Step 3c: Look at the URL to see what the user wants
 		search := r.URL.Query().Get("search")
@@ -95,7 +120,6 @@ func main() {
 		// Step 3e: Start building the "Ask" for Supabase
 		targetUrl := supabaseURL + "?select=*"
 
-
 		// Filter for Search (Name/Brand)
 		if search != "" {
 			// We use * for wildcards and url.QueryEscape the whole filter group
@@ -111,22 +135,20 @@ func main() {
 
 		// Filter for Brand (Toyota/Ford/etc.)
 		if brandFilter != "" {
-		// This turns "land rover" into "land+rover" or "land%20rover"
-		// which Supabase understands perfectly.
-		safeBrand := url.QueryEscape(brandFilter)
-		targetUrl += fmt.Sprintf("&brand=ilike.*%s*", safeBrand)
+			// This turns "land rover" into "land+rover" or "land%20rover"
+			// which Supabase understands perfectly.
+			safeBrand := url.QueryEscape(brandFilter)
+			targetUrl += fmt.Sprintf("&brand=ilike.*%s*", safeBrand)
 		}
 
 		//  If the user provided a price limit, add it to the Supabase URL
 		if maxPrice != "" {
-		targetUrl += fmt.Sprintf("&price=lt.%s", maxPrice)		
+			targetUrl += fmt.Sprintf("&price=lt.%s", maxPrice)
 		}
 
 		if minPrice != "" {
-		targetUrl += fmt.Sprintf("&price=gte.%s", minPrice)		
+			targetUrl += fmt.Sprintf("&price=gte.%s", minPrice)
 		}
-
-
 
 		// Step 3f-i: Add the Pagination "cuts" to the URL
 		targetUrl += fmt.Sprintf("&limit=%d&offset=%d", limit, offset)
@@ -155,8 +177,6 @@ func main() {
 		// NEW STEP 3j-i: Grab the total count from the Supabase header
 		totalCount := resp.Header.Get("Content-Range")
 
-
-		
 		// --- ADD THIS ERROR LOGGING BLOCK ---
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		if resp.StatusCode != http.StatusOK {
@@ -165,10 +185,8 @@ func main() {
 			log.Printf("SUPABASE SUCCESS: %s", string(bodyBytes))
 		}
 		// This line is CRITICAL: it puts the data back into the body so you can decode it later
-		resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) 
+		resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 		// ------------------------------------
-
-
 
 		// Step 3k: Read the JSON response and convert it into a slice of cars
 		var cars []Car
@@ -184,6 +202,7 @@ func main() {
 		}
 
 		// Step 3m: Move exact name matches to the top of the list
+		// WHY: If someone searches "Toyota", we want the actual Toyotas at the top, even if the database returns other cars that just mention Toyota in the description.
 		if search != "" {
 			s := strings.ToLower(search)
 			sort.Slice(cars, func(i, j int) bool {
@@ -278,4 +297,4 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
-} 
+}

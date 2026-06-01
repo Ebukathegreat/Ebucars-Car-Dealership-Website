@@ -19,8 +19,8 @@ export function useCars({ searchTerm, page = 1, limit = 10, filters = {} }) {
 
     const API_BASE_URL =
       window.location.hostname === "localhost"
-        ? "http://localhost:8080"
-        : "https://ebucars-car-dealership-website.onrender.com";
+        ? "http://localhost:8080/api"
+        : "https://my-backend-merger.onrender.com";
 
     if (pathname === "/search_page") {
       if (searchTerm === "" || searchTerm === undefined) {

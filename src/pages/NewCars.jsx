@@ -86,7 +86,7 @@ export default function NewCars() {
     );
 
   // 4. If the server is actually DOWN (500 error, not a 404), show the red error
-  if (error && !loading) return <div className="text-red-500">{error}</div>;
+  if (error && !loading) return <div className="text-red-500 p-8">{error}</div>;
 
   // 5. If the search finished and returned 0 cars, show the "No cars found" message
   if (!loading && debouncedTerm && cars.length === 0) {

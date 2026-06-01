@@ -38,9 +38,7 @@ export default function Home() {
 
   async function fetchAllCars() {
     try {
-      const res = await fetch(
-        "https://ebucars-car-dealership-website.onrender.com/cars?limit=15"
-      );
+      const res = await fetch("http://localhost:8080/api/cars?limit=15");
       const data = await res.json();
 
       console.log("DATA", data.cars);
