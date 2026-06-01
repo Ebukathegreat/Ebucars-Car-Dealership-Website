@@ -20,7 +20,7 @@ export function useCars({ searchTerm, page = 1, limit = 10, filters = {} }) {
     const API_BASE_URL =
       window.location.hostname === "localhost"
         ? "http://localhost:8080/api"
-        : "https://my-backend-merger.onrender.com";
+        : "https://my-backend-merger.onrender.com/api";
 
     if (pathname === "/search_page") {
       if (searchTerm === "" || searchTerm === undefined) {
