@@ -38,7 +38,12 @@ export default function Home() {
 
   async function fetchAllCars() {
     try {
-      const res = await fetch("http://localhost:8080/api/cars?limit=15");
+      const API_BASE_URL =
+        window.location.hostname === "localhost"
+          ? "http://localhost:8080/api/cars?limit-15"
+          : "https://my-backend-merger.onrender.com/api/cars?limit=15";
+
+      const res = await fetch(API_BASE_URL);
       const data = await res.json();
 
       console.log("DATA", data.cars);
